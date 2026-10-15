@@ -3,6 +3,8 @@
 A browser tool to manage backups (`.bak`) of the **Luminite Graviton M2** MIDI controller.
 Unofficial community project, not affiliated with Luminite.
 
+![Graviton M2 Librarian](Screenshot.png)
+
 ## What it does
 - Presets: rename, reorder, copy, clear; edit messages (CC, PC, Tap Tempo incl. enable/disable, Expression CC); bulk add and bulk edit across presets
 - Songs and setlists: edit the preset/song lists, song BPM and startup preset; import a song with its presets from another backup
