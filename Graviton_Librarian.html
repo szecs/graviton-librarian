@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graviton Librarian</title>
+<style>
+:root{color-scheme:dark;--bg:#0e1118;--panel:#161a24;--ink:#e6e9f2;--mute:#8a92a8;--line:#272d3d;--acc:#5b9dff;--accbg:#1a2640;--warn:#ffb454;--warnbg:#33260e;--bad:#ff8a80;--ok:#5fd39b;--chg:#ffc247;--cc:#ffb454;--pc:#5b9dff;--raw:#ff7a90}
+
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc)}button:disabled{opacity:.4;cursor:default}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+input,select{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0 10px 0 0;letter-spacing:.2px}header .sp{flex:1}
+.meta{color:var(--mute);font-size:12.5px}
+#banner{padding:0}.msg{padding:8px 14px;font-size:13px}.msg.w{background:var(--warnbg);color:var(--warn)}.msg.e{background:var(--warnbg);color:var(--bad)}
+nav{display:flex;gap:4px;padding:8px 14px 0;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap;align-items:flex-end}
+nav .tab{border:1px solid transparent;border-bottom:none;border-radius:7px 7px 0 0;padding:6px 14px;background:none;margin-bottom:-1px}
+nav .tab.on{background:var(--bg);border-color:var(--line);color:var(--acc);font-weight:600}
+nav .sp{flex:1}.tools{display:flex;gap:8px;align-items:center;padding-bottom:6px;flex-wrap:wrap}
+main{flex:1;min-height:0;display:flex;gap:12px;padding:12px 14px}
+.pane{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pane h2{margin:0;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--mute);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.list{overflow:auto;flex:1}
+.row{display:flex;align-items:center;gap:8px;padding:3px 10px;border-bottom:1px solid var(--line);min-height:34px}
+.row:last-child{border-bottom:none}.row.drag{opacity:.4}.row.over{background:var(--accbg);outline:2px solid var(--acc);outline-offset:-2px}
+.row.lock{color:var(--mute);background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(128,128,128,.07) 6px 12px)}
+.row.blank .nm{color:var(--mute)}
+.grip{cursor:grab;color:var(--mute);user-select:none;width:14px;text-align:center}
+.no{width:34px;text-align:right;color:var(--mute);font-variant-numeric:tabular-nums}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;padding:2px 4px;border-radius:5px}
+.nm:hover{background:var(--bg)}.row input.ed{flex:1;padding:2px 6px}
+.tag{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:10px;padding:0 7px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--chg);flex:none}.dot.off{visibility:hidden}
+.acts{display:flex;gap:2px;opacity:.15}.row:hover .acts,.row:focus-within .acts{opacity:1}
+.acts button{border:none;background:none;padding:2px 6px;font-size:12px;color:var(--mute)}.acts button:hover:not(:disabled){color:var(--acc)}
+.empty{margin:auto;max-width:520px;text-align:center;color:var(--mute);padding:40px 20px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:40px 20px;margin-top:14px}.drop.over{border-color:var(--acc);background:var(--accbg)}
+.hexv{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow:auto;background:var(--bg);padding:10px;border-radius:8px;max-height:50vh}
+.hexv b{color:var(--acc)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:18px;max-width:min(640px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.4)}dialog h3{margin:0 0 8px}dialog .bar{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+code{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 5px;border-radius:4px}
+dialog.wide{width:min(900px,96vw);max-width:none}
+button.pri{color:#06101f;font-weight:600}
+header{background:linear-gradient(180deg,#1b2030,var(--panel))}
+header h1{background:linear-gradient(90deg,#5b9dff,#b48cff,#ff7a90);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:16px}
+nav .tab{--tc:var(--acc)}
+nav .tab:hover{color:var(--tc)}
+nav .tab.on{color:var(--tc);border-top:2px solid var(--tc)}
+.pane{border-top:2px solid var(--tc,var(--acc))}
+.row{border-left:3px solid transparent}
+.row:not(.blank):not(.lock){border-left-color:var(--tc,var(--acc))}
+.row:not(.blank):not(.lock) .no{color:var(--tc,var(--acc))}
+.row:hover{background:rgba(255,255,255,.035)}
+.tag[data-a]{color:var(--tc,var(--acc));border-color:var(--tc,var(--acc));background:color-mix(in srgb,var(--tc,var(--acc)) 14%,transparent)}
+.tag.unk{color:var(--raw);border-color:var(--raw);background:color-mix(in srgb,var(--raw) 14%,transparent)}
+.mrow{border-left:3px solid var(--kc);padding-left:6px}
+.mrow.k-cc{--kc:var(--cc)}.mrow.k-pc{--kc:var(--pc)}.mrow.k-raw{--kc:var(--raw);background:color-mix(in srgb,var(--raw) 8%,transparent)}
+.mrow.mh{border-left-color:transparent}
+.mrow select{color:var(--kc);font-weight:600}
+input,select{background:#10131b}
+dialog{box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.row .use{display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden;font-size:12px;line-height:1.35;color:var(--mute);cursor:default;padding:2px 0}
+.row .use .ul{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .use b{font-weight:600;color:#b48cff}
+.row.gp,.row.gs{display:grid;column-gap:10px;align-items:center}
+.row.gp{grid-template-columns:18px 36px 128px 255px 215px minmax(0,1fr) auto}
+.row.gs{grid-template-columns:18px 36px 128px 215px minmax(0,1fr) auto}
+.row.gp .nm,.row.gs .nm,.row.gp input.ed,.row.gs input.ed{flex:none;width:100%;min-width:0;box-sizing:border-box}
+.row.gp .msgbtn,.row.gs .msgbtn{width:100%;justify-content:space-between;box-sizing:border-box}
+.row.gp .acts,.row.gs .acts{margin-left:0;justify-self:end}
+.row .xt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
+.row.gp .grip,.row.gs .grip{width:auto}
+.row .nm{flex:0 1 230px}.row input.ed{flex:0 1 230px}.row .acts{margin-left:auto}
+.msgbtn{display:flex;align-items:center;gap:10px;padding:6px 14px;font-weight:600;white-space:nowrap;color:var(--tc,var(--acc));border-color:var(--tc,var(--acc));background:color-mix(in srgb,var(--tc,var(--acc)) 12%,transparent)}
+.msgbtn:hover:not(:disabled){background:color-mix(in srgb,var(--tc,var(--acc)) 26%,transparent)}
+.msgbtn.none{font-weight:500;color:var(--mute);border-color:var(--line);border-style:dashed;background:none}
+.msgbtn:disabled{opacity:.35}
+.row.flash{animation:fl 2.2s ease-out}@keyframes fl{0%,40%{background:color-mix(in srgb,var(--tc,var(--acc)) 35%,transparent)}100%{background:none}}
+.sref{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.sref .go{text-align:left;color:#5b9dff;border-color:#5b9dff;background:color-mix(in srgb,#5b9dff 12%,transparent);font-weight:600}
+.sref select{min-width:0;width:100%}
+.mds{display:flex;gap:3px;align-items:center}.md{width:7px;height:7px;border-radius:50%;display:inline-block}
+.chrow .nm{flex:0 1 150px}.chrow input.ed{flex:0 1 150px}
+.sws{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end;max-width:470px}
+.swb{width:26px;height:24px;padding:0;border:2px solid transparent;border-radius:6px;font-size:10.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.swb:hover:not(:disabled){border-color:#fff}.swb.sel{border-color:#fff;box-shadow:0 0 0 2px var(--panel),0 0 0 3px #fff}
+.bankhd{position:sticky;top:0;z-index:2;padding:5px 12px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--tc);background:color-mix(in srgb,var(--tc) 12%,var(--panel));border-bottom:1px solid var(--line)}
+.brow{display:flex;gap:8px;align-items:center;padding:3px 10px;border-bottom:1px solid var(--line);cursor:pointer}.brow:hover{background:rgba(255,255,255,.04)}.brow.off{opacity:.4;cursor:default}
+.brow .no{width:30px;text-align:right;color:var(--mute)}
+.mrow.k-tap{--kc:#4cd38b}.mrow.k-exp{--kc:#b48cff}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.tile{min-width:86px;max-width:130px;padding:8px 10px;border-radius:10px;background:#3a4054;color:#fff;text-align:center;display:flex;flex-direction:column;gap:2px;font-size:12px;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.tile b{font-size:13px}.tile:empty{display:none}
+.chc{display:flex;gap:6px;align-items:center;min-width:0}
+.sw{flex:none;width:12px;height:12px;border-radius:50%;border:1px solid var(--mute)}
+#mlist{max-height:55vh;overflow:auto}
+.mrow{display:grid;grid-template-columns:22px 122px 176px 64px 64px 1fr 118px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.mrow.mh{font-size:11.5px;color:var(--mute);position:sticky;top:0;background:var(--panel);z-index:1}
+.mrow input,.mrow select{min-width:0;width:100%;padding:3px 6px}
+@media (max-width:820px){main{flex-direction:column}}
+</style></head>
+<body>
+<header>
+  <h1>Graviton Librarian</h1>
+  <label class="meta" title="Which Graviton the backup is from. Auto-detect checks the file layout; choose a model to force it.">Model <select id="selModel"><option value="auto">Auto-detect</option><option value="M2">Graviton M2</option><option value="M1">Graviton M1</option></select></label>
+  <button id="bOpen" class="pri">Open backup…</button>
+  <button id="bGet" title="Export the current backup slot from the unit (graviton.local)">Get from device</button>
+  <button id="bSrc" disabled>Load source backup…</button>
+  <button id="bUndo" disabled title="Ctrl+Z">Undo</button><button id="bRedo" disabled title="Ctrl+Y">Redo</button>
+  <span class="meta" id="fileMeta"></span><span class="sp"></span>
+  <label class="meta" title="Current tempo stored in the backup header (what Tap Tempo shows)">Tempo <input id="tempo" type="number" min="20" max="255" style="width:62px"> BPM</label>
+  <span class="meta" id="chgMeta"></span>
+  <button id="bDiff" disabled>Changes…</button>
+  <button id="bSave" class="pri" disabled>Save backup</button>
+  <button id="bSend" disabled title="Upload the current backup to the unit at graviton.local">Send to device</button>
+  <button id="bAbout" title="About, safety notes and licence">About</button>
+  <input type="file" id="fOpen" accept=".bak" hidden><input type="file" id="fSrc" accept=".bak" hidden><input type="file" id="fImp" accept=".json,application/json" hidden>
+</header>
+<div id="banner"></div>
+<nav id="nav" hidden>
+  <span id="tabs" style="display:flex;gap:4px"></span><span class="sp"></span>
+  <div class="tools">
+    <input id="q" type="search" placeholder="Filter by name…" style="width:170px">
+    <select id="bankSel" title="Show one bank only"></select>
+    <label class="meta"><input type="checkbox" id="hideBlank"> hide blank</label>
+    <label class="meta">Drag in list:
+      <select id="mode"><option value="move">Move (shift others)</option><option value="swap">Swap two</option><option value="copy">Copy over</option></select></label>
+    <button id="bBulk" title="Add one message to many presets at once">Bulk add message…</button><button id="bBulkEd" title="Find messages across all presets and change or delete them">Bulk edit messages…</button><button id="bExpAll">Export section…</button><button id="bImp">Import items…</button>
+  </div>
+</nav>
+<main id="main">
+  <div class="empty" id="welcome">
+    <h2 style="margin:0 0 8px;color:var(--ink);font-size:20px">Manage your Graviton M1 and M2 backups</h2>
+    <p>Browse, rename, reorder, copy and clear presets, songs, setlists and SysEx slots. Pull items from another backup of the same model by dragging them across. The model (M1 or M2) is detected automatically; use the <b>Model</b> menu at the top to force it.</p>
+    <p>Everything runs locally in your browser. Only the slots you change are rewritten; every other byte of the file is kept exactly as it was.</p>
+    <p class="meta" style="margin-top:14px"><b>Before you start:</b> keep your original <code>.bak</code> and try edits on one backup slot first. This is an unofficial tool, so see <a href="#" id="aboutLink">About</a> for what has been tested.</p>
+    <p class="meta" id="httpsNote" style="display:none;color:var(--warn)">You're using the web version. Browsers block web pages from reaching the unit, so <b>Get from device</b> and <b>Send to device</b> are off here. <a href="" id="selfDl" download="Graviton_Librarian.html">Download this page</a> and open the file on your computer to use them.</p>
+    <div class="drop" id="dz">Drop an <code>.bak</code> file here, or use <b>Open backup…</b></div>
+  </div>
+</main>
+<dialog id="dlg"></dialog>
+
+<script>
+/* ===== Graviton Librarian core: record-level operations on a Graviton M1 / M2 backup ===== */
+const SECTIONS = {
+  presets:  { label:'Presets',  off:0x006e, size:81, count:120, nameOff:2, nameLen:14, prefix:'Preset ',  locked:i=>MODEL==='M2'&&i>=118 },
+  songs:    { label:'Songs',    off:0x4b6e, size:44, count:120, nameOff:2, nameLen:14, prefix:'Song ',    locked:()=>false },
+  setlists: { label:'Setlists', off:0x600e, size:44, count:120, nameOff:2, nameLen:14, prefix:'Setlist ', locked:()=>false },
+  sysex:    { label:'SysEx',    off:0x2666, size:79, count:120, nameOff:2, nameLen:14, prefix:'SysEx ',   locked:()=>false },
+};
+const ORDER = ['presets','songs','setlists','sysex'];
+/* The M1 file has the same record layout as the M2; all tables sit 156 bytes later (bigger header).
+   M1 was decoded from two backups (firmware 5.2.6). Song BPM (u32 table at 0xd3d0) and the header tempo
+   (0x54) were confirmed by a single-change diff; the startup-preset table (0xd5b0) was confirmed by setting a song's startup preset to None on the unit.
+   The M1 'Tempo' message is type 0xf8 with the BPM in the second data byte. Tap Tempo / Expression CC are
+   M2-only here (full=false). */
+const MODELS={
+  M2:{label:'Graviton M2',shift:0,  ver:'5.4.0',ch:0x84aa,sb:0xd654,sf:0xd834,full:true},
+  M1:{label:'Graviton M1',shift:156,ver:'5.2.6',ch:0x8366,sb:0xd3d0,sf:0xd5b0,full:false},
+};
+const BASE_OFF={presets:0x006e,songs:0x4b6e,setlists:0x600e,sysex:0x2666};
+let MODEL='M2', KNOWN_VERSION='5.4.0';
+function useModel(k){ const M=MODELS[k]; MODEL=k; for(const x of ORDER) SECTIONS[x].off=BASE_OFF[x]+M.shift;
+  KNOWN_VERSION=M.ver; CH_OFF=M.ch; SB_OFF=M.sb; SF_OFF=M.sf; }
+function detectModel(d){ const prev=MODEL, ok=[];
+  for(const k of Object.keys(MODELS)){ useModel(k); const r=sanity(d); if(!r.errors.length) ok.push([k,r.h.version===MODELS[k].ver?0:1]); }
+  useModel(prev); if(!ok.length) return null; ok.sort((a,b)=>a[1]-b[1]); return ok[0][0]; }
+const APP_VERSION = '1.0.0';
+
+const cstr = (d,a,n)=>{let s='';for(let i=a;i<a+n&&i<d.length;i++){if(!d[i])break;s+=String.fromCharCode(d[i]);}return s;};
+const recStart = (sec,i)=>SECTIONS[sec].off + i*SECTIONS[sec].size;
+
+function parseHeader(d){
+  if(d.length<0x70) return {ok:false};
+  const dv=new DataView(d.buffer,d.byteOffset,d.byteLength);
+  return {ok:true, backupName:cstr(d,0,14), id:cstr(d,14,16), version:cstr(d,0x22,6), size:dv.getUint32(0x28,true)};
+}
+function nameFieldValid(d,sec,i){
+  const S=SECTIONS[sec], a=recStart(sec,i)+S.nameOff; let nul=false;
+  for(let k=0;k<S.nameLen;k++){const b=d[a+k];
+    if(nul){ if(b!==0) return false; } else if(b===0) nul=true; else if(b<32||b>126) return false; }
+  return true;
+}
+function sanity(d){
+  const h=parseHeader(d), errors=[], warnings=[];
+  if(!h.ok){ errors.push('File is too small to be a Graviton backup.'); return {h,errors,warnings}; }
+  if(h.size!==d.length) errors.push(`Header says ${h.size} bytes, file has ${d.length}.`);
+  if(!/^\d+\.\d+\.\d+$/.test(h.version)) errors.push('No firmware version found where expected.');
+  else if(h.version!==KNOWN_VERSION) warnings.push(`Backup is firmware ${h.version}; this layout was verified on ${KNOWN_VERSION}. Check results carefully before restoring to the device.`);
+  for(const sec of ORDER){ const S=SECTIONS[sec];
+    if(S.off+S.size*S.count>d.length){ errors.push(`${S.label}: table runs past end of file.`); continue; }
+    let bad=0; for(let i=0;i<S.count;i++) if(!nameFieldValid(d,sec,i)) bad++;
+    if(bad>S.count*0.05) errors.push(`${S.label}: ${bad} of ${S.count} names look invalid – layout doesn't match.`);
+    else if(bad) warnings.push(`${S.label}: ${bad} name(s) contain unusual characters.`);
+  }
+  return {h,errors,warnings};
+}
+const getName=(d,sec,i)=>cstr(d,recStart(sec,i)+SECTIONS[sec].nameOff,SECTIONS[sec].nameLen);
+function cleanName(sec,s){ return s.replace(/[^\x20-\x7e]/g,'').slice(0,SECTIONS[sec].nameLen-1); }
+function setName(d,sec,i,s){
+  const S=SECTIONS[sec], a=recStart(sec,i)+S.nameOff; s=cleanName(sec,s);
+  for(let k=0;k<S.nameLen;k++) d[a+k]= k<s.length ? s.charCodeAt(k) : 0;
+}
+const getRec=(d,sec,i)=>d.slice(recStart(sec,i),recStart(sec,i)+SECTIONS[sec].size);
+function putRec(d,sec,i,r){ d.set(r,recStart(sec,i)); }
+function bodyKey(r,sec){ const S=SECTIONS[sec], c=r.slice(); c.fill(0,S.nameOff,S.nameOff+S.nameLen); return Array.from(c).join(','); }
+const isDefaultName=(sec,n)=>new RegExp('^'+SECTIONS[sec].prefix+'\\d+$').test(n);
+function findTemplate(d,sec){
+  const cnt=new Map();
+  for(let i=0;i<SECTIONS[sec].count;i++){
+    if(SECTIONS[sec].locked(i)||!isDefaultName(sec,getName(d,sec,i))) continue;
+    const k=bodyKey(getRec(d,sec,i),sec); cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let best=null,n=0; for(const [k,v] of cnt) if(v>n){best=k;n=v;}
+  if(!best) return null; return Uint8Array.from(best.split(',').map(Number));
+}
+function isBlank(d,sec,i,tpl){
+  return !!tpl && isDefaultName(sec,getName(d,sec,i)) && bodyKey(getRec(d,sec,i),sec)===Array.from(tpl).join(',');
+}
+function makeBlank(d,sec,i,tpl){ const r=tpl.slice(); putRec(d,sec,i,r); if(sec==='songs') setSongOpt(d,i,{bpm:0,flag:SF_NONE}); setName(d,sec,i,SECTIONS[sec].prefix+(i+1)); }
+function renumber(d,sec,lo,hi){
+  for(let i=lo;i<=hi;i++){ const n=getName(d,sec,i); if(isDefaultName(sec,n) && n!==SECTIONS[sec].prefix+(i+1)) setName(d,sec,i,SECTIONS[sec].prefix+(i+1)); }
+}
+function locked(sec,i){ return SECTIONS[sec].locked(i); }
+function assertFree(sec,...idx){ for(const i of idx){ if(i<0||i>=SECTIONS[sec].count) throw new Error('Slot out of range'); if(locked(sec,i)) throw new Error('That slot is a protected system slot (Mute / Tuner).'); } }
+
+function moveRec(d,sec,from,to){
+  assertFree(sec,from,to); if(from===to) return;
+  const S=SECTIONS[sec], recs=[]; for(let i=0;i<S.count;i++) recs.push(getRec(d,sec,i));
+  const opts=sec==='songs'?Array.from({length:S.count},(_,i)=>getSongOpt(d,i)):null;
+  const [r]=recs.splice(from,1); recs.splice(to,0,r);
+  if(opts){const [o]=opts.splice(from,1); opts.splice(to,0,o);}
+  const lo=Math.min(from,to), hi=Math.max(from,to);
+  for(let i=lo;i<=hi;i++){ putRec(d,sec,i,recs[i]); if(opts) setSongOpt(d,i,opts[i]); }
+  renumber(d,sec,lo,hi);
+}
+function swapRec(d,sec,a,b){
+  assertFree(sec,a,b); if(a===b) return;
+  const ra=getRec(d,sec,a), rb=getRec(d,sec,b); putRec(d,sec,a,rb); putRec(d,sec,b,ra);
+  if(sec==='songs'){const oa=getSongOpt(d,a),ob=getSongOpt(d,b);setSongOpt(d,a,ob);setSongOpt(d,b,oa);} renumber(d,sec,Math.min(a,b),Math.max(a,b));
+}
+function overwriteRec(d,sec,to,rec){
+  assertFree(sec,to); if(rec.length!==SECTIONS[sec].size) throw new Error('Record size mismatch');
+  putRec(d,sec,to,rec); renumber(d,sec,to,to);
+}
+function copyRec(d,sec,from,to){ const o=sec==='songs'?getSongOpt(d,from):null; overwriteRec(d,sec,to,getRec(d,sec,from)); if(o) setSongOpt(d,to,o); }
+
+function diff(a,b){
+  const out={total:0,bySection:{},outside:0};
+  const covered=new Uint8Array(a.length);
+  for(const sec of ORDER){ const S=SECTIONS[sec], ch=[];
+    for(let i=0;i<S.count;i++){ const s=recStart(sec,i); covered.fill(1,s,s+S.size);
+      let c=false; for(let k=0;k<S.size;k++) if(a[s+k]!==b[s+k]){c=true;out.total++;} if(c) ch.push(i); }
+    out.bySection[sec]=ch; }
+  if(hasSongOpts(a)&&hasSongOpts(b)){ for(let i=0;i<120;i++){ let c=false;
+    for(let k=0;k<4;k++){const x=SB_OFF+i*4+k; covered[x]=1; if(a[x]!==b[x]){c=true;out.total++;}}
+    covered[SF_OFF+i]=1; if(a[SF_OFF+i]!==b[SF_OFF+i]){c=true;out.total++;}
+    if(c&&!out.bySection.songs.includes(i)) out.bySection.songs.push(i); }
+    out.bySection.songs.sort((x,y)=>x-y); }
+  out.tempo=a[TEMPO_OFF]!==b[TEMPO_OFF]; covered[TEMPO_OFF]=1; if(out.tempo) out.total++;
+  out.bySection.channels=[];
+  for(let i=0;i<CH_N;i++){ const s=CH_OFF+i*CH_STRIDE; covered.fill(1,s+CH_NAME,s+CH_COL+1);
+    let c=false; for(let k=CH_NAME;k<=CH_COL;k++) if(a[s+k]!==b[s+k]){c=true;out.total++;} if(c) out.bySection.channels.push(i); }
+  for(let k=0;k<a.length;k++) if(!covered[k]&&a[k]!==b[k]) out.outside++;
+  return out;
+}
+const toHex=r=>Array.from(r,b=>b.toString(16).padStart(2,'0')).join('');
+const fromHex=h=>Uint8Array.from(h.match(/../g)||[],x=>parseInt(x,16));
+const TEMPO_OFF=0x54; // current tempo in BPM (1 byte; confirmed by a 97 -> 199 change on the unit)
+const SONG_N=8, SONG_DATA=16;
+// Per-song options (decoded from backups where you changed them on the unit):
+//   BPM: u32 LE table at 0xd654, one entry per song, 0 = Off.
+//   Startup preset: byte table at 0xd834, 0x78 + k = k-th preset of the song (0-based), 0xc7 = None.
+let SB_OFF=0xd654, SF_OFF=0xd834; const SF_NONE=0xc7, SF_BASE=0x78;
+const hasSongOpts=d=>SF_OFF!==null&&d.length>=SF_OFF+120;
+function getSongOpt(d,i){ if(!hasSongOpts(d)) return {bpm:0,flag:SF_NONE};
+  const a=SB_OFF+i*4; return {bpm:(d[a]|(d[a+1]<<8)|(d[a+2]<<16)|(d[a+3]<<24))>>>0, flag:d[SF_OFF+i]}; }
+function setSongOpt(d,i,o){ if(!hasSongOpts(d)) return; const a=SB_OFF+i*4;
+  d[a]=o.bpm&255; d[a+1]=(o.bpm>>>8)&255; d[a+2]=(o.bpm>>>16)&255; d[a+3]=(o.bpm>>>24)&255; d[SF_OFF+i]=o.flag; }
+const songStartup=o=>(o.flag>=SF_BASE&&o.flag<SF_BASE+SONG_N)?o.flag-SF_BASE:-1;
+function getSongRefs(d,i,sec='songs'){const s=recStart(sec,i)+SONG_DATA,o=[];
+  for(let k=0;k<SONG_N;k++){if(d[s+k]!==1)break;o.push(d[s+10+k]*10+d[s+20+k]);}return o;}
+function setSongRefs(d,i,refs,sec='songs'){
+  assertFree(sec,i);
+  if(refs.length>SONG_N) throw new Error('A song or setlist holds at most 8 entries.');
+  if(refs.some(r=>!(r>=0&&r<120))) throw new Error('Invalid preset reference.');
+  const s=recStart(sec,i)+SONG_DATA;
+  for(let k=0;k<SONG_N;k++){const u=k<refs.length;d[s+k]=u?1:0;d[s+10+k]=u?Math.floor(refs[k]/10):0;d[s+20+k]=u?refs[k]%10:0;}
+}
+const MSG_N=16, MSG_OFF=16, CNT_OFF=80, DEF_MSG=[0xb0,0,0,1];
+function getMsgs(d,i){const s=recStart('presets',i),n=Math.min(d[s+CNT_OFF],MSG_N),o=[];
+  for(let k=0;k<n;k++){const a=s+MSG_OFF+k*4;o.push([d[a],d[a+1],d[a+2],d[a+3]]);}return o;}
+function setMsgs(d,i,msgs){
+  if(i<0||i>=SECTIONS.presets.count) throw new Error('Slot out of range');  /* Mute / Tuner (119, 120) have editable messages; their names/slots stay protected */
+  if(msgs.length>MSG_N) throw new Error('A preset holds at most 16 messages.');
+  for(const m of msgs) if(m.length!==4||m.some(b=>!(b>=0&&b<=255))) throw new Error('Invalid message bytes.');
+  const s=recStart('presets',i), old=Math.min(d[s+CNT_OFF],MSG_N);
+  for(let k=0;k<Math.max(old,msgs.length);k++) d.set(k<msgs.length?msgs[k]:DEF_MSG, s+MSG_OFF+k*4);
+  d[s+CNT_OFF]=msgs.length;
+}
+let CH_OFF=0x84aa; const CH_STRIDE=0x28c;
+const CH_N=15, CH_NAME=2, CH_NAMELEN=9, CH_COL=11;
+/* index = stored colour byte; the unit's picker shows it as number index+1 (sampled from a photo of the picker) */
+const PALETTE=['#009ef2','#ee1e4f','#a9c354','#613fed','#00cbd7','#006bf9','#fdc36b','#f692f7','#0090ce','#c201db','#00f163','#3181c5','#fc573d','#00a757','#8395a9','#87d4fb'];
+const chanName=(d,i)=>cstr(d,CH_OFF+i*CH_STRIDE+CH_NAME,CH_NAMELEN);
+function setChan(d,i,name,colorStored){
+  if(i<0||i>=CH_N) throw new Error('Channel out of range');
+  const a=CH_OFF+i*CH_STRIDE;
+  if(name!==null){ name=name.replace(/[^\x20-\x7e]/g,'').slice(0,CH_NAMELEN-1); for(let k=0;k<CH_NAMELEN;k++) d[a+CH_NAME+k]=k<name.length?name.charCodeAt(k):0; }
+  if(colorStored!==null){ if(!(colorStored>=0&&colorStored<16)) throw new Error('Colour must be 1–16'); d[a+CH_COL]=colorStored; }
+}
+function chanInfo(d,n){
+  if(n<2||n>16) return {name:'Ch '+n,color:null,colorIdx:null};
+  const i=n-2,a=CH_OFF+i*CH_STRIDE;
+  if(a+CH_STRIDE>d.length) return {name:'Ch '+n,color:null,colorIdx:null};
+  let nm=chanName(d,i); if(!/^[\x20-\x7e]+$/.test(nm)) nm='Ch '+n;
+  const ci=d[a+CH_COL]; return {name:nm,color:ci<16?PALETTE[ci]:null,colorIdx:ci<16?ci+1:null};
+}
+if(false) module.exports={MODELS,useModel,detectModel,SECTIONS,ORDER,parseHeader,sanity,getName,setName,getRec,putRec,findTemplate,isBlank,makeBlank,moveRec,swapRec,overwriteRec,copyRec,diff,toHex,fromHex,isDefaultName,cleanName,locked};
+
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const TC={presets:'#5b9dff',songs:'#b48cff',setlists:'#4cd38b',sysex:'#ffa24c',channels:'#ff6bb5'};
+const TABS=ORDER.concat(['channels']);
+const st={model:'M2',srcModel:null,orig:null,cur:null,name:'',src:null,srcName:'',undo:[],redo:[],sec:'presets',tpl:{},srcTpl:{},hdr:null,editing:null,issues:null};
+
+/* ---------- helpers ---------- */
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function dlg(html,buttons){const d=$('#dlg');d.className='';d.innerHTML=html+'<div class="bar"></div>';const bar=d.querySelector('.bar');
+  for(const [label,fn,pri] of buttons){const b=document.createElement('button');b.textContent=label;if(pri)b.className='pri';b.onclick=()=>{const keep=fn&&fn(d);if(keep!==false)d.close();};bar.appendChild(b);}
+  d.showModal();return d;}
+function toast(msg,kind='w'){const b=$('#banner');const e=document.createElement('div');e.className='msg '+kind;e.textContent=msg;b.appendChild(e);setTimeout(()=>e.remove(),6000);}
+function download(name,data,type='application/octet-stream'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(new Uint8Array(r.result));r.onerror=rej;r.readAsArrayBuffer(f);});
+
+/* ---------- loading ---------- */
+async function loadMain(file){
+  const d=await readFile(file), want=$('#selModel').value, prev=MODEL;
+  const mk=want==='auto'?detectModel(d):want;
+  const fail=(why)=>{useModel(prev);dlg(`<h3>This doesn't look like a supported Graviton backup</h3>${why}<p class="meta">Nothing was loaded.${want==='auto'?'':' You forced the model to '+MODELS[want].label+'; try Auto-detect.'}</p>`,[['OK']]);};
+  if(!mk){ const lines=[]; for(const k of Object.keys(MODELS)){useModel(k);const r=sanity(d);lines.push(`<li><b>${MODELS[k].label}:</b> ${esc(r.errors[0]||'ok')}</li>`);} return fail('<ul>'+lines.join('')+'</ul>'); }
+  useModel(mk); const s=sanity(d);
+  if(s.errors.length) return fail(`<ul>${s.errors.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`);
+  st.model=mk;st.orig=d;st.cur=d.slice();st.name=file.name;st.undo=[];st.redo=[];st.hdr=s.h;st.issues=s;
+  if(st.src&&st.srcModel!==mk){st.src=null;st.srcName='';st.srcModel=null;st.srcTpl={};toast('The source backup was cleared because it is from a different model.','w');}
+  st.tpl={};for(const k of ORDER)st.tpl[k]=findTemplate(d,k);
+  $('#banner').innerHTML='';s.warnings.forEach(w=>toast(w,'w'));
+  if(!MODELS[mk].full) toast('Graviton M1 support is new and was built from two backups (firmware '+MODELS[mk].ver+'). Names, messages (CC / PC / Tempo), songs with BPM, setlists, SysEx and channels work; Tap Tempo and Expression CC are M2-only. Tested on a real M1 (firmware 5.2.6): names, messages incl. Tempo, songs with BPM, setlists, channels, startup preset, bulk edit, swapping, copying between backups and Get/Send to device. SysEx slots are untested. Keep your original backup.','w');
+  {const wl=$('#welcome');if(wl)wl.remove();}$('#nav').hidden=false;$('#bSrc').disabled=false;render();
+}
+async function loadSrc(file){
+  const d=await readFile(file),mk=detectModel(d);
+  if(!mk){toast('Source file rejected: not a supported Graviton backup.','e');return;}
+  if(mk!==st.model){toast(`That source is a ${MODELS[mk].label} backup but the open backup is a ${MODELS[st.model].label}. Items can only be pulled between backups of the same model.`,'e');return;}
+  const s=sanity(d);
+  if(s.errors.length){toast('Source file rejected: '+s.errors[0],'e');return;}
+  st.src=d;st.srcName=file.name;st.srcModel=mk;st.srcTpl={};for(const k of ORDER)st.srcTpl[k]=findTemplate(d,k);
+  s.warnings.forEach(w=>toast('Source: '+w,'w'));render();
+}
+
+/* ---------- editing with undo ---------- */
+function edit(fn){
+  const next=st.cur.slice();
+  try{fn(next);}catch(e){toast(e.message,'e');return false;}
+  st.undo.push(st.cur);if(st.undo.length>100)st.undo.shift();st.redo=[];st.cur=next;render();return true;
+}
+function undo(){if(!st.undo.length)return;st.redo.push(st.cur);st.cur=st.undo.pop();render();}
+function redo(){if(!st.redo.length)return;st.undo.push(st.cur);st.cur=st.redo.pop();render();}
+
+/* ---------- rendering ---------- */
+function render(){
+  if(!st.cur)return;
+  const h=st.hdr;
+  $('#fileMeta').textContent=`${MODELS[st.model].label} · ${st.name} · “${h.backupName}” · firmware ${h.version}`+(st.src?` · source: ${st.srcName}`:'');
+  const df=diff(st.orig,st.cur),n=TABS.reduce((a,k)=>a+df.bySection[k].length,0)+(df.tempo?1:0);
+  $('#chgMeta').textContent=n?`${n} change${n>1?'s':''}`:'no changes';
+  {const t=$('#tempo');t.value=st.cur[TEMPO_OFF];t.onchange=()=>{const v=Math.max(20,Math.min(255,parseInt(t.value,10)||st.cur[TEMPO_OFF]));if(v===st.cur[TEMPO_OFF]){t.value=v;return;}edit(x=>{x[TEMPO_OFF]=v;});};}
+  $('#bSave').disabled=!n;$('#bSend').disabled=location.protocol==='https:';$('#bDiff').disabled=!n;$('#bUndo').disabled=!st.undo.length;$('#bRedo').disabled=!st.redo.length;
+  $('#tabs').innerHTML=TABS.map(k=>`<button class="tab ${k===st.sec?'on':''}" data-k="${k}" style="--tc:${TC[k]}">${k==='channels'?'Channels':SECTIONS[k].label}${df.bySection[k].length?` <span class="dot" style="display:inline-block"></span>`:''}</button>`).join('');
+  $('#tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{st.sec=b.dataset.k;st.editing=null;render();});
+  $('.tools').style.display=st.sec==='channels'?'none':'';
+  $('#bankSel').style.display=$('#bBulk').style.display=$('#bBulkEd').style.display=st.sec==='presets'?'':'none';
+  const main=$('#main');
+  const keep=st._lastSec===st.sec?[...main.querySelectorAll('.list')].map(l=>l.scrollTop):[],wy=window.scrollY;st._lastSec=st.sec;
+  main.innerHTML='';
+  const restore=()=>{main.querySelectorAll('.list').forEach((l,i)=>{if(keep[i])l.scrollTop=keep[i];});if(keep.length)window.scrollTo(0,wy);};
+  if(st.sec==='channels'){main.appendChild(chanPane());restore();return;}
+  main.appendChild(pane('cur',`${SECTIONS[st.sec].label} — ${esc(st.name)}`));
+  if(st.src)main.appendChild(pane('src',`Source — ${esc(st.srcName)} <span class="meta">drag rows into the left list</span>`));
+  restore();
+}
+function pane(which,title){
+  const isSrc=which==='src',data=isSrc?st.src:st.cur,tpl=(isSrc?st.srcTpl:st.tpl)[st.sec],S=SECTIONS[st.sec];
+  const q=$('#q').value.trim().toLowerCase(),hb=$('#hideBlank').checked;
+  const df=isSrc?null:diff(st.orig,st.cur).bySection[st.sec];const chg=df?new Set(df):null;
+  const p=document.createElement('div');p.className='pane';p.style.setProperty('--tc',TC[st.sec]);p.innerHTML=`<h2><span>${title}</span><span>${S.count} slots</span></h2><div class="list"></div>`;
+  const list=p.querySelector('.list');
+  for(let i=0;i<S.count;i++){
+    const name=getName(data,st.sec,i),blank=isBlank(data,st.sec,i,tpl),lk=locked(st.sec,i);
+    if(st.sec==='presets'&&!p._um)p._um=usageMap(data);
+    if(q&&!name.toLowerCase().includes(q))continue;if(hb&&blank&&!lk)continue;
+    if(st.sec==='presets'){const bn=Math.floor(i/10),bk=$('#bankSel').value;if(bk&&String(bn+1)!==bk)continue;
+      if(bn!==p._lb){p._lb=bn;const hd=document.createElement('div');hd.className='bankhd';hd.textContent='Bank '+(bn+1)+' · presets '+(bn*10+1)+'–'+(bn*10+10);list.appendChild(hd);}}
+    const gcls=st.sec==='presets'?' gp':(st.sec==='songs'||st.sec==='setlists')?' gs':'';
+    const r=document.createElement('div');r.className='row'+(blank?' blank':'')+(lk?' lock':'')+gcls;
+    r.draggable=!lk&&!(st.editing&&!isSrc&&st.editing===i);r.dataset.i=i;
+    const editing=!isSrc&&st.editing===i;
+    r.innerHTML=`<span class="grip">${lk?'🔒':'⋮⋮'}</span><span class="no">${i+1}</span>`+
+      (editing?`<input class="ed" maxlength="${S.nameLen-1}" value="${esc(name)}">`:`<span class="nm" title="${isSrc?'':'Click to rename'}">${esc(name)||'<i>(unnamed)</i>'}</span>`)+(st.sec==='presets'?((!blank&&usageTag(data,i,p._um))||'<span class="use"></span>'):'')+
+      (()=>{const mt=msgTag(data,i,blank,lk,isSrc),dot=chg&&chg.has(i)?'<span class="dot" title="Changed from the file you opened"></span>':'',bl=blank?'<span class="tag">blank</span>':'';
+        return gcls?mt[0]+`<span class="xt">${bl}${mt[1]}${dot}</span>`:bl+dot;})()+
+      `<span class="acts">${isSrc&&st.sec==='songs'&&getSongRefs(data,i,'songs').length?'<button data-a="isong" title="Copy this song and its presets into the main file">import…</button>':''}${isSrc?'<button data-a="hex" title="View raw bytes">hex</button>':
+      `<button data-a="copy" title="Copy this slot to another slot">copy to…</button><button data-a="clear" title="Reset to blank">clear</button><button data-a="exp" title="Export as file">export</button><button data-a="hex" title="View raw bytes">hex</button>`}</span>`;
+    if(lk)r.querySelectorAll('button').forEach(b=>{if(b.dataset.a!=='hex'&&b.dataset.a!=='exp'&&b.dataset.a!=='msg'&&b.dataset.a!=='isong')b.disabled=true;});
+    wireRow(r,which,i,lk,editing);list.appendChild(r);
+  }
+  if(!list.children.length)list.innerHTML='<div class="empty">Nothing to show with the current filter.</div>';
+  return p;
+}
+function wireRow(r,which,i,lk,editing){
+  const isSrc=which==='src';
+  if(editing){const inp=r.querySelector('input.ed');setTimeout(()=>{inp.focus();inp.select();});
+    const done=ok=>{if(st.editing!==i)return;st.editing=null;if(ok&&inp.value!==getName(st.cur,st.sec,i))edit(d=>setName(d,st.sec,i,inp.value));else render();};
+    inp.onkeydown=e=>{if(e.key==='Enter')done(true);if(e.key==='Escape')done(false);};inp.onblur=()=>done(true);}
+  else if(!isSrc&&!lk)r.querySelector('.nm').onclick=()=>{st.editing=i;render();};
+  r.querySelectorAll('.acts button').forEach(b=>b.onclick=e=>{e.stopPropagation();rowAction(b.dataset.a,which,i);});
+  r.querySelectorAll('.tag[data-a],.msgbtn[data-a]').forEach(t=>t.onclick=e=>{e.stopPropagation();rowAction(t.dataset.a,which,i);});
+  r.ondragstart=e=>{e.dataTransfer.setData('text/plain',JSON.stringify({which,sec:st.sec,i}));e.dataTransfer.effectAllowed='copyMove';r.classList.add('drag');};
+  r.ondragend=()=>r.classList.remove('drag');
+  if(!isSrc){
+    r.ondragover=e=>{if(lk)return;e.preventDefault();r.classList.add('over');};
+    r.ondragleave=()=>r.classList.remove('over');
+    r.ondrop=async e=>{e.preventDefault();r.classList.remove('over');if(lk){toast('Mute / Tuner are protected system slots.','e');return;}
+      if(e.dataTransfer.files&&e.dataTransfer.files.length){importFile(e.dataTransfer.files[0],i);return;}
+      let p;try{p=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}
+      if(p.sec!==st.sec){return;}
+      if(p.which==='src'){editW(d=>{overwriteRec(d,st.sec,i,getRec(st.src,st.sec,p.i));if(st.sec==='songs')setSongOpt(d,i,getSongOpt(st.src,p.i));});}
+      else{const m=$('#mode').value;editW(d=>m==='move'?moveRec(d,st.sec,p.i,i):m==='swap'?swapRec(d,st.sec,p.i,i):copyRec(d,st.sec,p.i,i));}};
+  }
+}
+function rowAction(a,which,i){
+  const data=which==='src'?st.src:st.cur,sec=st.sec,S=SECTIONS[sec];
+  if(a==='isong'){importSong(i);return;}
+  if(a==='msg'){(sec==='songs'||sec==='setlists'?openSong:openMsgs)(which,i);return;}
+  if(a==='clear'){if(!st.tpl[sec]){toast('No blank template found for this section.','e');return;}editW(d=>makeBlank(d,sec,i,st.tpl[sec]));}
+  if(a==='hex'){const rec=getRec(data,sec,i),lines=[];
+    for(let k=0;k<rec.length;k+=16){const sl=Array.from(rec.slice(k,k+16));
+      lines.push(String(k).padStart(3,'0')+'  '+sl.map((b,j)=>{const x=b.toString(16).padStart(2,'0'),inName=k+j>=S.nameOff&&k+j<S.nameOff+S.nameLen;return inName?`<b>${x}</b>`:x;}).join(' ')+'  '+sl.map(b=>b>=32&&b<127?esc(String.fromCharCode(b)):'.').join(''));}
+    dlg(`<h3>${S.label} ${i+1}: ${esc(getName(data,sec,i))}</h3><div class="hexv">${lines.join('\n')}</div><p class="meta">${rec.length} bytes. Name field highlighted. The librarian never edits anything outside the name.</p>`,[['Close']]);}
+  if(a==='exp'){const rec=getRec(data,sec,i);download(`${sec}-${i+1}-${getName(data,sec,i).replace(/\W+/g,'_')}.json`,JSON.stringify({tool:'m2-librarian',v:1,section:sec,firmware:st.hdr.version,items:[{name:getName(data,sec,i),hex:toHex(rec)}]},null,1),'application/json');}
+  if(a==='copy'){dlg(`<h3>Copy ${S.label.toLowerCase()} ${i+1} “${esc(getName(data,sec,i))}” to…</h3><label>Slot number (1–${S.count}${sec==='presets'?', 1–118':''}) <input id="tgt" type="number" min="1" max="${S.count}" value="${Math.min(i+2,S.count)}"></label><p class="meta">The target slot is overwritten.</p>`,
+    [['Cancel'],['Copy',d=>{const t=parseInt(d.querySelector('#tgt').value,10)-1;editW(x=>copyRec(x,sec,i,t));},true]]);}
+}
+
+/* ---------- reference warnings & song import ---------- */
+function refUsers(d,sec,idxs){ // who points at these slots?
+  const by=sec==='presets'?'songs':sec==='songs'?'setlists':null,out=[];if(!by)return out;
+  const set=new Set(idxs);
+  for(let k=0;k<SECTIONS[by].count;k++){const r=getSongRefs(d,k,by).filter(x=>set.has(x));
+    if(r.length)out.push({k,name:getName(d,by,k),slots:r});}
+  return out;
+}
+function warnRefs(sec,before,after){
+  const by=sec==='presets'?'Song':sec==='songs'?'Setlist':null;if(!by)return;
+  const ch=diff(before,after).bySection[sec];if(!ch.length)return;
+  const u=refUsers(after,sec,ch);if(!u.length)return;
+  const lst=u.slice(0,6).map(x=>`${by} ${x.k+1} “${x.name}”`).join(', ')+(u.length>6?` and ${u.length-6} more`:'');
+  const what=sec==='presets'?'preset':'song';
+  toast(`Heads-up: ${lst} reference${u.length===1?'s':''} ${what} slots you just changed (${ch.length>6?ch.length+' slots':ch.slice(0,6).map(x=>x+1).join(', ')}). References are by slot number, so they now point at the new content.`,'w');
+}
+function editW(fn){const b=st.cur,sec=st.sec;if(edit(fn))warnRefs(sec,b,st.cur);}
+function importSong(si){
+  const src=st.src,rec=getRec(src,'songs',si),refs=getSongRefs(src,si,'songs');
+  const songTpl=st.tpl.songs,preTpl=st.tpl.presets;
+  const body=r=>Array.from(r.slice(2)).join(',');
+  const d=dlg(`<h3>Import song ${si+1} “${esc(getName(src,'songs',si))}” with its presets</h3>
+    <label>Target song slot <input id="isl" type="number" min="1" max="120" style="width:80px"></label>
+    <label style="margin-left:14px"><input type="checkbox" id="iru" checked> reuse identical presets already in this file</label>
+    <div id="ipl" style="margin-top:10px"></div><p id="ierr" class="meta" style="color:var(--bad);min-height:1.3em"></p>
+    <p class="meta">Presets are copied into free (blank) slots in the order they appear in the song; the new song then points to those slots. Nothing else is touched.</p>`,
+    [['Cancel'],['Import',dd=>{const p=plan();if(p.err){dd.querySelector('#ierr').textContent=p.err;return false;}
+      const b=st.cur;
+      edit(x=>{overwriteRec(x,'songs',p.t,rec);p.map.forEach(m=>{if(!m.reuse)overwriteRec(x,'presets',m.to,getRec(src,'presets',m.from));});
+        setSongRefs(x,p.t,p.map.map(m=>m.to),'songs');setSongOpt(x,p.t,getSongOpt(src,si));});
+      toast(`Imported “${getName(src,'songs',si)}” to song slot ${p.t+1}`+(p.map.filter(m=>!m.reuse).length?` with ${p.map.filter(m=>!m.reuse).length} new preset(s).`:'.'),'ok');},true]]);
+  d.className='wide';
+  const free=(sec,tpl,max,skip)=>{for(let i=0;i<max;i++)if(!skip.has(i)&&isBlank(st.cur,sec,i,tpl))return i;return -1;};
+  d.querySelector('#isl').value=(free('songs',songTpl,120,new Set())+1)||1;
+  function plan(){
+    const t=parseInt(d.querySelector('#isl').value,10)-1;if(!(t>=0&&t<120))return {err:'Song slot must be 1–120.'};
+    const reuse=d.querySelector('#iru').checked,used=new Set(),map=[],seen=new Map();
+    for(const f of refs){ if(seen.has(f)){map.push(seen.get(f));continue;}
+      let m=null;
+      if(reuse){for(let i=0;i<118;i++)if(!isBlank(st.cur,'presets',i,preTpl)&&body(getRec(st.cur,'presets',i))===body(getRec(src,'presets',f))){m={from:f,to:i,reuse:true};break;}}
+      if(!m){const i=free('presets',preTpl,118,used);if(i<0)return {err:'Not enough free preset slots for this song.'};used.add(i);m={from:f,to:i,reuse:false};}
+      seen.set(f,m);map.push(m);}
+    return {t,map};
+  }
+  function draw(){const p=plan(),L=d.querySelector('#ipl');d.querySelector('#ierr').textContent=p.err||'';
+    if(p.err){L.innerHTML='';return;}
+    const over=!isBlank(st.cur,'songs',p.t,songTpl);
+    L.innerHTML=(over?`<p class="meta" style="color:var(--warn)">Song slot ${p.t+1} “${esc(getName(st.cur,'songs',p.t))}” will be overwritten.</p>`:'')+
+      (p.map.map((m,k)=>`<div class="sref"><span class="meta">${k+1}</span><span>${m.from+1} · ${esc(getName(src,'presets',m.from))} <span class="meta">→</span> <b>slot ${m.to+1}</b></span><span class="meta">${m.reuse?'already in file – reused':'copied to free slot'}</span></div>`).join('')||'<p class="meta">This song has no presets.</p>');}
+  d.querySelector('#isl').oninput=draw;d.querySelector('#iru').onchange=draw;draw();
+}
+
+/* ---------- channels ---------- */
+function chanPane(){
+  const p=document.createElement('div');p.className='pane';p.style.setProperty('--tc',TC.channels);
+  const chg=new Set(diff(st.orig,st.cur).bySection.channels);
+  p.innerHTML=`<h2><span>Channels — ${esc(st.name)}</span><span>names and colours of MIDI channels 2–16</span></h2><div class="list"></div>`;
+  const list=p.querySelector('.list');
+  for(let i=0;i<CH_N;i++){
+    const a=CH_OFF+i*CH_STRIDE,name=chanName(st.cur,i),ci=st.cur[a+CH_COL],editing=st.chEdit===i;
+    const r=document.createElement('div');r.className='row chrow';r.style.borderLeftColor=ci<16?PALETTE[ci]:'transparent';
+    let sw='';for(let n=1;n<=16;n++)sw+=`<button class="swb${n===ci+1?' sel':''}" data-n="${n}" style="background:${PALETTE[n-1]}" title="Colour ${n}">${n}</button>`;
+    r.innerHTML=`<span class="no" style="width:30px">${i+2}</span>`+
+      (editing?`<input class="ed" maxlength="${CH_NAMELEN-1}" value="${esc(name)}">`:`<span class="nm" title="Click to rename (max ${CH_NAMELEN-1} characters)">${esc(name)||'<i>(unnamed)</i>'}</span>`)+
+      `<span class="tag">MIDI ch ${i+2}</span>${chg.has(i)?'<span class="dot" title="Changed from the file you opened"></span>':''}<span class="sws">${sw}</span>`;
+    if(editing){const inp=r.querySelector('input.ed');setTimeout(()=>{inp.focus();inp.select();});
+      const done=ok=>{if(st.chEdit!==i)return;st.chEdit=null;if(ok&&inp.value!==name)edit(d=>setChan(d,i,inp.value,null));else render();};
+      inp.onkeydown=e=>{if(e.key==='Enter')done(true);if(e.key==='Escape')done(false);};inp.onblur=()=>done(true);}
+    else r.querySelector('.nm').onclick=()=>{st.chEdit=i;render();};
+    r.querySelectorAll('.swb').forEach(b=>b.onclick=()=>{const n=parseInt(b.dataset.n,10);if(n-1!==ci)edit(d=>setChan(d,i,null,n-1));});
+    list.appendChild(r);
+  }
+  const note=document.createElement('div');note.className='meta';note.style.padding='10px 12px';
+  note.innerHTML='Presets refer to channels by number (2–16), so renaming or recolouring never breaks them. Channel 1 has no entry in the table. Swatch numbers and colours match the unit’s “Select a Color” screen.';
+  p.appendChild(note);return p;
+}
+
+/* ---------- preset messages ---------- */
+const hasCh=k=>k==='CC'||k==='PC'||k==='EXP';
+function msgKind(m){const s=m[0];if(s===0xf8&&MODEL==='M1')return 'TMP';if(s>=0x80)return {0xb0:'CC',0xc0:'PC'}[s&0xf0]||'RAW';return {8:'TAP',13:'EXP'}[s]||'RAW';}
+function songTag(data,i,lk,isSrc){
+  const sl=st.sec==='setlists',w=sl?'songs':'presets';
+  const refs=getSongRefs(data,i,st.sec),n=refs.length,ro=lk||isSrc;
+  const label=ro?(n?`View ${w} · ${n}`:'No '+w):(n?`${sl?'Songs':'Presets'} · ${n}`:'+ Add '+w);
+  let extra='';
+  if(!sl){const o=getSongOpt(data,i),su=songStartup(o);
+    extra=(o.bpm?`<span class="tag" title="Song BPM">${o.bpm} BPM</span>`:'')+(su>=0&&su<n?`<span class="tag" title="Startup preset: preset ${su+1} of this song">▶ ${esc(getName(data,'presets',refs[su]))}</span>`:'');}
+  return [`<button class="msgbtn${n?'':' none'}" data-a="msg" title="${ro?'View':'Edit'} the ${w} in this ${sl?'setlist':'song'}"${ro&&!n?' disabled':''}><span>${sl?'☰':'♪'} ${label}</span></button>`,extra];
+}
+function goPreset(j,tsec='presets'){
+  const d=$('#dlg');if(d.open)d.close();
+  st.sec=tsec;$('#q').value='';$('#hideBlank').checked=false;$('#bankSel').value='';st.editing=null;render();
+  const r=document.querySelector(`.pane .row[data-i="${j}"]`);
+  if(r){r.scrollIntoView({block:'center'});r.classList.add('flash');}
+}
+function openSong(which,i){
+  const sec=st.sec,sl=sec==='setlists',tsec=sl?'songs':'presets',what=sl?'songs':'presets';
+  const data=which==='src'?st.src:st.cur, ro=which==='src';
+  const work=getSongRefs(data,i,sec), opt=getSongOpt(data,i), opt0=JSON.stringify(opt);
+  const buttons=ro?[['Close']]:[['Cancel'],['Apply',dd=>{
+    if(!sl&&songStartup(opt)>=work.length)opt.flag=SF_NONE;
+    const sameOpt=sl||JSON.stringify(getSongOpt(st.cur,i))===JSON.stringify(opt);
+    if(JSON.stringify(getSongRefs(st.cur,i,sec))===JSON.stringify(work)&&sameOpt)return;
+    edit(x=>{setSongRefs(x,i,work,sec);if(!sl)setSongOpt(x,i,opt);});},true]];
+  const d=dlg(`<h3>${sl?'Setlist':'Song'} ${i+1}: ${esc(getName(data,sec,i))} – ${what}</h3>
+    <div class="meta">${work.length} of ${SONG_N} used${ro?' · source backup (read only)':''} · click a name to jump to it${ro?'':' (unsaved dialog changes are discarded)'}</div>
+    ${(sl||SF_OFF===null)?'':`<div class="sopts" style="display:flex;gap:18px;flex-wrap:wrap;align-items:end;margin:8px 0 10px">
+      <label class="meta">Song BPM<br><input id="sbpm" type="number" min="30" max="300" style="width:80px"${ro?' disabled':''}> <label><input type="checkbox" id="sboff"${ro?' disabled':''}> Off</label></label>
+      <label class="meta">Startup preset<br><select id="sstart"${ro?' disabled':''}></select></label></div>`}<div id="slist"></div><div id="sadd" style="margin-top:8px"></div>
+    <p class="meta">${(sl||SF_OFF===null)?'':'Song BPM and Startup preset are stored per song (Startup preset = which of the song’s own presets is selected first). '}Decoded from your backups: each ${sl?'setlist':'song'} stores up to 8 ${sl?'song':'preset'} references (bank + position within the bank). Order = playing order.</p>`,buttons);
+  d.className='wide';
+  function drawOpts(){
+    const b=d.querySelector('#sbpm'),o=d.querySelector('#sboff'),s=d.querySelector('#sstart');if(!b)return;
+    o.checked=!opt.bpm;b.disabled=ro||!opt.bpm;b.value=opt.bpm||'';
+    const su=songStartup(opt);let h='<option value="-1">None</option>';
+    work.forEach((j,k)=>{h+=`<option value="${k}"${su===k?' selected':''}>${k+1}${k===0?' (first)':''} · ${esc(getName(data,'presets',j))||'(unnamed)'}</option>`;});
+    s.innerHTML=h;if(su<0||su>=work.length)s.value='-1';
+  }
+  if(!sl&&!ro&&SF_OFF!==null){
+    d.querySelector('#sboff').onchange=e=>{opt.bpm=e.target.checked?0:(opt.bpm||120);drawOpts();};
+    d.querySelector('#sbpm').onchange=e=>{opt.bpm=Math.max(30,Math.min(300,parseInt(e.target.value,10)||120));drawOpts();};
+    d.querySelector('#sstart').onchange=e=>{const v=parseInt(e.target.value,10);opt.flag=v<0?SF_NONE:SF_BASE+v;};
+  }
+  function draw(){
+    if(!sl)drawOpts();
+    const L=d.querySelector('#slist');L.innerHTML='';
+    work.forEach((j,k)=>{
+      const r=document.createElement('div');r.className='sref';
+      let opts='';for(let p=0;p<120;p++)opts+=`<option value="${p}"${p===j?' selected':''}>${p+1} · ${esc(getName(data,tsec,p))||'(unnamed)'}</option>`;
+      r.innerHTML=`<span class="meta">${k+1}</span>${ro?'':''}<button class="go" title="Go to this entry">${j+1} · ${esc(getName(data,tsec,j))||'(unnamed)'}</button>
+        <span class="acts" style="opacity:1">${ro?'':`<select data-f="p" title="Change entry">${opts}</select><button data-a="up"${k?'':' disabled'}>↑</button><button data-a="dn"${k<work.length-1?'':' disabled'}>↓</button><button data-a="rm">✕</button>`}</span>`;
+      r.querySelector('.go').onclick=()=>{if(which==='src'){toast('That preset belongs to the source backup; jump works for the main file only.','w');return;}goPreset(j,tsec);};
+      const sel=r.querySelector('[data-f]');if(sel)sel.onchange=()=>{work[k]=+sel.value;draw();};
+      r.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;
+        if(a==='rm')work.splice(k,1);else if(a==='up')[work[k-1],work[k]]=[work[k],work[k-1]];else [work[k+1],work[k]]=[work[k],work[k+1]];draw();});
+      L.appendChild(r);});
+    if(!work.length)L.innerHTML='<p class="meta">No entries yet.</p>';
+    const A=d.querySelector('#sadd');A.innerHTML='';
+    if(!ro&&work.length<SONG_N){const b=document.createElement('button');b.textContent='+ Add '+(sl?'song':'preset');
+      b.onclick=()=>{work.push(work.length?Math.min(119,work[work.length-1]+1):0);draw();};A.appendChild(b);}
+  }
+  draw();
+}
+function msgTag(data,i,blank,lk,isSrc){
+  if(st.sec==='songs'||st.sec==='setlists')return songTag(data,i,lk,isSrc);
+  if(st.sec!=='presets')return ['',''];
+  const ms=getMsgs(data,i),n=ms.length,u=ms.filter(m=>msgKind(m)==='RAW').length,ro=isSrc;
+  const C={CC:'var(--cc)',PC:'var(--pc)',TAP:'#4cd38b',TMP:'#4cd38b',EXP:'#b48cff',RAW:'var(--raw)'};
+  const label=ro?(n?`View messages · ${n}`:'No messages'):(n?`Messages · ${n}`:'+ Add messages');
+  const dots=ms.map(m=>`<i class="md" style="background:${C[msgKind(m)]}"></i>`).join('');
+  return [`<button class="msgbtn${n?'':' none'}" data-a="msg" title="${ro?'View':'Edit'} the messages of this preset"${ro&&!n?' disabled':''}><span>✎ ${label}</span>${dots?`<span class="mds">${dots}</span>`:''}</button>`,(u?`<span class="tag unk" data-a="msg" style="cursor:pointer" title="${u} message(s) of a type I could not identify">${u} unidentified</span>`:'')];
+}
+function usageMap(d){ // preset index -> [{k:song index, pos:0-based position in that song}]
+  const m=new Map();
+  for(let k=0;k<SECTIONS.songs.count;k++)getSongRefs(d,k,'songs').forEach((r,pos)=>{if(!m.has(r))m.set(r,[]);m.get(r).push({k,pos});});
+  return m;
+}
+const ordinal=n=>n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:Math.min(n%10,4)%4]||'th');
+function usageTag(d,i,map){
+  const u=map.get(i);if(!u||!u.length)return '';
+  const txt=x=>`${ordinal(x.pos+1)} Preset in ${getName(d,'songs',x.k)}`;
+  const shown=u.slice(0,3).map(x=>`<span class="ul">[<b>${esc(txt(x))}</b>]</span>`).join('')+(u.length>3?`<span class="ul">+${u.length-3} more</span>`:'');
+  const full=u.map(x=>`${ordinal(x.pos+1)} Preset in Song ${x.k+1} ${getName(d,'songs',x.k)}`).join('\n');
+  return `<span class="use" title="${esc(full)}">${shown}</span>`;
+}
+function presetUsage(d,i){
+  const ord=n=>n+(['th','st','nd','rd'][(n%100>10&&n%100<14)?0:Math.min(n%10,4)%4]||'th')+' Preset';
+  const u=[];
+  for(let k=0;k<SECTIONS.songs.count;k++){
+    getSongRefs(d,k,'songs').forEach((r,pos)=>{if(r===i)u.push(`${ord(pos+1)} in Song ${k+1} ${getName(d,'songs',k)}`);});}
+  if(!u.length)return 'not used in any Song';
+  return u.length>4?u.slice(0,4).join(', ')+` and ${u.length-4} more`:u.join(', ');
+}
+function openMsgs(which,i){
+  let data=which==='src'?st.src:st.cur, pickCh=null; const ro=which==='src',sysSlot=locked('presets',i);
+  const work=getMsgs(data,i).map(m=>m.slice());
+  const hx=b=>b.toString(16).padStart(2,'0');
+  const num=(v,lo,hi)=>{v=parseInt(v,10);return isNaN(v)?lo:Math.max(lo,Math.min(hi,v));};
+  const applyFn=dd=>{
+    const bad=work.findIndex(m=>{const k=msgKind(m);return ((k==='CC'||k==='PC'||k==='EXP')&&(m[1]>127||m[2]>127))||(hasCh(k)&&(m[3]<1||m[3]>16));});
+    if(bad>=0){dd.querySelector('#merr').textContent=`Message ${bad+1}: CC/PC values must be 0–127 and the MIDI channel 1–16.`;return false;}
+    if(JSON.stringify(getMsgs(st.cur,i))===JSON.stringify(work))return;
+    edit(x=>setMsgs(x,i,work));};
+  const buttons=ro?[['Close']]:[['Cancel'],['Apply',applyFn,true]];
+  const pi=i-1, hasPrev=pi>=0, ni=i+1, hasNext=ni<SECTIONS.presets.count;
+  const d=dlg(`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px"><h3 style="margin:0">Preset ${i+1}: ${esc(getName(data,'presets',i))} – Messages <span class="meta" style="font-weight:400">(${esc(presetUsage(data,i))})</span></h3>
+    <span style="display:flex;gap:6px;flex:none"><button id="mprev" title="Open the previous preset${ro?'':' (changes made in this dialog are discarded)'}"${hasPrev?'':' disabled'}>‹ Previous</button><button id="mnext" title="Open the next preset${ro?'':' (changes made in this dialog are discarded)'}"${hasNext?'':' disabled'}>Next ›</button>${ro?'':`<button id="msnext" class="pri" title="Apply the changes, then open the next preset"${hasNext?'':' disabled'}>Save and Load Next ›</button>`}</span></div>
+    <div id="mtiles" class="tiles"></div><div id="cpick"></div>
+    <div class="meta"><span style="color:var(--cc)">● CC</span> &nbsp;<span style="color:var(--pc)">● PC</span> &nbsp;<span style="color:#4cd38b">● Tap Tempo</span> &nbsp;<span style="color:#b48cff">● Expression CC</span> &nbsp;${MODEL==='M1'?'<span style="color:#4cd38b">● Tempo</span> &nbsp;':''}<span style="color:var(--raw)">● Other (not identified)</span> &nbsp;·&nbsp; ${work.length} of ${MSG_N} used${ro?(which==='src'?' · source backup (read only)':' · protected system slot (read only)'):''}</div>
+    ${sysSlot?'<p class="meta" style="color:var(--warn)">Slots 119 and 120 are the unit’s Mute and Tuner presets. They hold ordinary messages, which can differ from setup to setup; only the name and slot position are fixed.</p>':''}
+    <div id="mlist"></div><p id="merr" class="meta" style="color:var(--bad);min-height:1.3em"></p><div id="madd" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <p class="meta">The 4th byte of a message is its <b>MIDI channel</b>; channel names (and the tile colors, where known) come from your backup’s channel table, the same labels the unit shows. Not yet confirmed: the second data byte of <b>Expression CC</b> (15 in all your backups, although the unit shows “Value 0”, so it is an internal setting rather than the value; the first byte is the CC number the pedal sends). <b>Tap Tempo</b>: the first data byte holds the tempo the unit last stored (0–127) plus the <b>Enabled</b> flag in bit 7 (confirmed by diffing your backups: disabling it only sets that bit). Switching a row to Expression CC starts from CC 50, value 15.</p>`,buttons);
+  d.className='wide';
+  d.querySelector('#mprev').onclick=()=>{d.close();openMsgs(which,pi);};
+  d.querySelector('#mnext').onclick=()=>{d.close();openMsgs(which,ni);};
+  if(!ro)d.querySelector('#msnext').onclick=()=>{if(applyFn(d)===false)return;d.close();openMsgs(which,ni);};
+  function draw(){
+    const T=d.querySelector('#mtiles');T.innerHTML='';
+    work.forEach(m=>{const k=msgKind(m),c=hasCh(k)?chanInfo(data,m[3]):null,t=document.createElement('div');t.className='tile';
+      if(c&&c.color)t.style.background=c.color;
+      const l1=k==='TAP'?'Tap Tempo':k==='TMP'?'Tempo':k==='RAW'?'Other':c.name;
+      const l2=k==='TMP'?`${m[2]} BPM`:k==='TAP'?(m[1]&0x80?'disabled':''):k==='CC'?`CC ${m[1]}`:k==='PC'?`PC ${m[1]}`:k==='EXP'?`Expression CC ${m[1]}`:k==='RAW'?m.map(hx).join(' '):'';
+      t.innerHTML=`<b>${esc(l1)}</b>${l2?`<span>${esc(l2)}</span>`:''}`;
+      if(c&&!ro&&m[3]>=1&&m[3]<=16){t.style.cursor='pointer';t.title='Click to change this channel’s colour';t.onclick=()=>{pickCh=m[3];draw();};}
+      T.appendChild(t);});
+    const CP=d.querySelector('#cpick');CP.innerHTML='';
+    if(pickCh!==null){
+      if(pickCh<2){CP.innerHTML='<p class="meta" style="color:var(--warn)">MIDI channel 1 has no colour entry in the backup, so its colour cannot be changed.</p>';pickCh=null;}
+      else{const ci=chanInfo(data,pickCh);let s='';
+        for(let n=1;n<=16;n++)s+=`<button class="swb${n===ci.colorIdx?' sel':''}" data-n="${n}" style="background:${PALETTE[n-1]}" title="Colour ${n}">${n}</button>`;
+        CP.innerHTML=`<div class="meta" style="margin:2px 0 6px">Colour of channel ${pickCh} “${esc(ci.name)}” – applies to every message and preset on this channel <button data-x style="margin-left:8px">close</button></div><div class="sws" style="margin:0 0 10px;max-width:none;justify-content:flex-start">${s}</div>`;
+        CP.querySelector('[data-x]').onclick=()=>{pickCh=null;draw();};
+        CP.querySelectorAll('.swb').forEach(b=>b.onclick=()=>{const n=parseInt(b.dataset.n,10),ch=pickCh;pickCh=null;
+          if(n!==ci.colorIdx)edit(x=>setChan(x,ch-2,null,n-1));
+          data=st.cur;draw();});}}
+    const L=d.querySelector('#mlist');
+    L.innerHTML='<div class="mrow mh"><span>#</span><span>Type</span><span>MIDI channel</span><span>Number</span><span>Value</span><span>Raw bytes (hex)</span><span></span></div>';
+    work.forEach((m,k)=>{
+      const kind=msgKind(m),r=document.createElement('div');r.className='mrow k-'+kind.toLowerCase();
+      const dis=ro?' disabled':'', lim=(kind==='CC'||kind==='PC'||kind==='EXP')?127:255;
+      let chCell='<span class="meta">—</span>';
+      if(hasCh(kind)){
+        const c=chanInfo(data,m[3]);let opts=(m[3]<1||m[3]>16)?`<option selected>${m[3]}?</option>`:'';
+        for(let n=1;n<=16;n++){const nm=chanInfo(data,n).name;opts+=`<option value="${n}"${m[3]===n?' selected':''}>${nm==='Ch '+n?n:n+' · '+esc(nm)}</option>`;}
+        chCell=`<span class="chc"><i class="sw" data-ch="${m[3]}" style="${c.color?'background:'+c.color:''}${ro?'':';cursor:pointer'}" title="${ro?(c.colorIdx!=null?'colour '+c.colorIdx:''):'Click to change the colour of this channel'+(c.colorIdx!=null?' (now '+c.colorIdx+')':'')}"></i><select data-f="c"${dis}>${opts}</select></span>`;
+      }
+      const tN={CC:'CC number',PC:'Program number',TAP:'Tempo (0–127) the unit last stored here; bit 7 of this byte is the Enabled flag',EXP:'CC number the expression pedal sends (e.g. 50)',TMP:'Tempo in BPM (second data byte of the M1 Tempo message)',RAW:''}[kind];
+      const tV={CC:'Value',PC:'Not used by PC',TAP:'Unconfirmed',EXP:'Not the pedal value (the unit shows Value 0 while this byte is 15). Internal setting; leave at 15',RAW:''}[kind];
+      r.innerHTML=`<span class="meta">${k+1}</span>
+        <select data-f="t"${dis}><option value="CC"${kind==='CC'?' selected':''}>CC</option><option value="PC"${kind==='PC'?' selected':''}>PC</option>${MODELS[MODEL].full||kind==='TAP'||kind==='EXP'?`<option value="TAP"${kind==='TAP'?' selected':''}>Tap Tempo</option><option value="EXP"${kind==='EXP'?' selected':''}>Expression CC</option>`:''}${MODEL==='M1'?`<option value="TMP"${kind==='TMP'?' selected':''}>Tempo</option>`:''}${kind==='RAW'?'<option value="RAW" selected>Other</option>':''}</select>
+        ${chCell}
+        <input data-f="n" type="number" min="0" max="${kind==='TAP'?127:kind==='TMP'?255:lim}" value="${kind==='TAP'?m[1]&0x7f:kind==='TMP'?m[2]:m[1]}" title="${tN}"${dis||(kind==='RAW'?' disabled':'')}>
+        ${kind==='TMP'?'<span class="meta">BPM</span>':kind==='TAP'?`<label class="meta" style="display:flex;gap:6px;align-items:center" title="Unchecked = this Tap Tempo button is disabled on the unit (bit 7 of the first data byte)"><input data-f="en" type="checkbox"${m[1]&0x80?'':' checked'}${dis}> Enabled</label>`:`<input data-f="v" type="number" min="0" max="${lim}" value="${m[2]}" title="${tV}"${dis||(kind==='RAW'||kind==='PC'?' disabled':'')}>`}
+        <input data-f="h" value="${m.map(hx).join(' ')}"${dis} style="font-family:ui-monospace,Menlo,Consolas,monospace">
+        <span class="acts" style="opacity:1">${ro?'':`<button data-a="up" title="Move up"${k?'':' disabled'}>↑</button><button data-a="dn" title="Move down"${k<work.length-1?'':' disabled'}>↓</button><button data-a="dup" title="Duplicate"${work.length<MSG_N?'':' disabled'}>⧉</button><button data-a="rm" title="Delete message">✕</button>`}</span>`;
+      const swEl=r.querySelector('.sw[data-ch]');if(swEl&&!ro)swEl.onclick=()=>{pickCh=m[3];draw();};
+      r.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
+        const f=inp.dataset.f;
+        if(f==='t'){const t=inp.value,ch=(m[3]>=1&&m[3]<=16)?m[3]:1;
+          if(t==='CC'){if(kind!=='CC'&&kind!=='PC'){m[1]=0;m[2]=0;}m[0]=0xb0;m[3]=ch;}
+          else if(t==='PC'){if(kind!=='CC'&&kind!=='PC')m[1]=0;m[0]=0xc0;m[2]=0;m[3]=ch;}
+          else if(t==='TAP'){m[0]=8;m[1]=0;m[2]=0;m[3]=1;}
+          else if(t==='TMP'){m[0]=0xf8;m[1]=0;m[2]=Math.max(20,Math.min(255,st.cur[TEMPO_OFF]||120));m[3]=1;}
+          else if(t==='EXP'){m[0]=0x0d;m[1]=0x32;m[2]=0x0f;m[3]=ch;}}
+        else if(f==='c')m[3]=num(inp.value,1,16);
+        else if(f==='n'){if(kind==='TMP')m[2]=num(inp.value,0,255);else m[1]=kind==='TAP'?((m[1]&0x80)|num(inp.value,0,127)):num(inp.value,0,lim);}
+        else if(f==='en')m[1]=inp.checked?(m[1]&0x7f):(m[1]|0x80);
+        else if(f==='v')m[2]=num(inp.value,0,lim);
+        else if(f==='h'){const x=inp.value.replace(/[^0-9a-f]/gi,'');
+          if(x.length!==8){d.querySelector('#merr').textContent='Raw bytes need exactly 4 bytes (8 hex digits).';return;}
+          for(let q=0;q<4;q++)m[q]=parseInt(x.substr(q*2,2),16);}
+        d.querySelector('#merr').textContent='';draw();});
+      r.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;
+        if(a==='rm')work.splice(k,1);
+        else if(a==='dup')work.splice(k+1,0,m.slice());
+        else if(a==='up')[work[k-1],work[k]]=[work[k],work[k-1]];
+        else [work[k+1],work[k]]=[work[k],work[k+1]];
+        d.querySelector('#merr').textContent='';draw();});
+      L.appendChild(r);
+    });
+    if(!work.length)L.insertAdjacentHTML('beforeend','<p class="meta">No messages in this preset.</p>');
+    const A=d.querySelector('#madd');A.innerHTML='';
+    if(!ro&&work.length<MSG_N){
+      const lastCh=[...work].reverse().map(m=>m[3]).find((c,ix,ar)=>{const mm=[...work].reverse()[ix];return hasCh(msgKind(mm))&&c>=1&&c<=16;})||1;
+      [['+ CC',[0xb0,0,0,lastCh]],['+ PC',[0xc0,0,0,lastCh]],['+ Tap Tempo',[8,0,0,1]],['+ Expression CC',[0x0d,0x32,0x0f,lastCh]],['+ Tempo',[0xf8,0,Math.max(20,Math.min(255,st.cur[TEMPO_OFF]||120)),1]]].filter(([t])=>MODELS[MODEL].full?t!=='+ Tempo':/^\+ (CC|PC|Tempo)$/.test(t)).forEach(([t,b])=>{
+        const bt=document.createElement('button');bt.textContent=t;bt.onclick=()=>{work.push(b.slice());draw();};A.appendChild(bt);});}
+  }
+  draw();
+}
+
+/* ---------- import / export ---------- */
+function exportSection(){const sec=st.sec,items=[];for(let i=0;i<SECTIONS[sec].count;i++)items.push({name:getName(st.cur,sec,i),hex:toHex(getRec(st.cur,sec,i))});
+  download(`${st.name.replace(/\.bak$/i,'')}_${sec}.json`,JSON.stringify({tool:'m2-librarian',v:1,section:sec,firmware:st.hdr.version,items},null,1),'application/json');}
+async function importFile(file,startSlot){
+  let j;try{j=JSON.parse(new TextDecoder().decode(await readFile(file)));}catch{toast('Not a librarian export file.','e');return;}
+  if(j.tool!=='m2-librarian'||!Array.isArray(j.items)){toast('Not a librarian export file.','e');return;}
+  if(j.section!==st.sec){toast(`That file contains ${j.section}, but you're viewing ${st.sec}. Switch tabs first.`,'e');return;}
+  const apply=start=>editW(d=>{const S=SECTIONS[st.sec];if(start+j.items.length>(st.sec==='presets'?118:S.count))throw new Error('Not enough slots after that position.');
+    j.items.forEach((it,k)=>{const rec=fromHex(it.hex);if(rec.length!==S.size)throw new Error('Item size does not match this section.');overwriteRec(d,st.sec,start+k,rec);if(st.sec==='songs')setSongOpt(d,start+k,{bpm:0,flag:SF_NONE});});});
+  if(startSlot!==undefined)return apply(startSlot);
+  dlg(`<h3>Import ${j.items.length} item${j.items.length>1?'s':''}</h3><label>Start at slot <input id="tgt" type="number" min="1" value="1"></label><p class="meta">Existing items in those slots are overwritten.</p>`,[['Cancel'],['Import',d=>apply(parseInt(d.querySelector('#tgt').value,10)-1),true]]);
+}
+
+/* ---------- save & changes ---------- */
+function showChanges(){
+  const df=diff(st.orig,st.cur);let h='<h3>Changes since you opened the file</h3>';
+  for(const k of ORDER){const l=df.bySection[k];if(!l.length)continue;
+    h+=`<p><b>${SECTIONS[k].label}</b> (${l.length})<br>`+l.slice(0,40).map(i=>`${i+1}: ${esc(getName(st.orig,k,i))} → ${esc(getName(st.cur,k,i))}`).join('<br>')+(l.length>40?`<br>…and ${l.length-40} more`:'')+'</p>';}
+  {const l=df.bySection.channels;if(l.length)h+=`<p><b>Channels</b> (${l.length})<br>`+l.map(i=>`${i+2}: ${esc(chanName(st.orig,i))} (colour ${st.orig[CH_OFF+i*CH_STRIDE+CH_COL]+1}) → ${esc(chanName(st.cur,i))} (colour ${st.cur[CH_OFF+i*CH_STRIDE+CH_COL]+1})`).join('<br>')+'</p>';}
+  if(df.tempo)h+=`<p><b>Tempo</b><br>${st.orig[TEMPO_OFF]} BPM → ${st.cur[TEMPO_OFF]} BPM</p>`;
+  h+=`<p class="meta">Bytes changed outside the slots listed above: <b style="color:${df.outside?'var(--bad)':'var(--ok)'}">${df.outside}</b>. All other data (global settings, expression, MIDI channels, labels, colors) is identical to the original.</p>`;
+  dlg(h,[['Close']]);
+}
+function save(){
+  const df=diff(st.orig,st.cur);if(df.outside){toast('Safety check failed: bytes outside edited slots differ. Not saving.','e');return;}
+  const base=st.name.replace(/\.bak$/i,'')+'_edited';
+  dlg(`<h3>Save backup as…</h3><label class="meta">File name<br><input id="sfn" value="${esc(base)}" style="width:68%"> <b>.bak</b></label><p class="meta">The file you opened stays untouched. Keep file names short: older firmware crashed on long backup names.</p>`,
+    [['Cancel'],['Save',dd=>{let n=dd.querySelector('#sfn').value.trim().replace(/[\\/:*?"<>|]+/g,'_').replace(/\.bak$/i,'');if(!n)n=base;
+      download(n+'.bak',st.cur);toast('Saved as '+n+'.bak – the original file is untouched.','w');},true]]);
+}
+function getDevice(){
+  if(location.protocol==='https:'){toast('Browsers block https pages from reaching the unit (http). Open Graviton_Librarian.html as a local file instead.','e');return;}
+  dlg(`<h3>Get from device</h3><p>Downloads the backup slot currently selected on the unit from <b>http://graviton.local/download</b> (same as the unit's “Export” button). The unit must be in Wi-Fi mode and your computer on the same network.</p><p class="meta">Your browser saves the file to its download folder (the page can't read it directly). Afterwards click <b>Open downloaded file…</b> and pick it. If the download is blocked, allow pop-ups/downloads for this page.</p>`,
+    [['Cancel'],['Download',dd=>{
+      const fm=document.createElement('form');fm.method='GET';fm.action='http://graviton.local/download';fm.target='_blank';fm.style.display='none';
+      document.body.appendChild(fm);fm.submit();setTimeout(()=>fm.remove(),2000);
+      toast('Download requested. When the file has saved, use “Open backup…” to load it.','w');
+    },true],['Open downloaded file…',dd=>{$('#fOpen').click();},true]]);
+}
+function sendDevice(){
+  const df=diff(st.orig,st.cur);if(df.outside){toast('Safety check failed: bytes outside edited slots differ. Not sending.','e');return;}
+  if(location.protocol==='https:'){toast('Browsers block https pages from reaching the unit (http). Open Graviton_Librarian.html as a local file instead.','e');return;}
+  const nm=(st.name.replace(/\.bak$/i,'')||'backup').replace(/[\\/:*?"<>|]+/g,'_')+'.bak';
+  const curName=String.fromCharCode(...st.cur.slice(0,14)).replace(/\0+$/,'');
+  dlg(`<h3>Send to device</h3><p>Uploads the current state (${st.cur.length} bytes) to <b>http://graviton.local/upload</b> as <b>${esc(nm)}</b>.</p><label>Target slot: <input id="slotn" type="number" min="1" max="99" placeholder="as in file" style="width:90px"> <span class="meta">(empty = keep the name in the file: “${esc(curName)}”)</span></label><p class="meta"><b>Experimental:</b> the unit's upload form has no slot field. A slot number here rewrites the trailing number of the backup name (“M2 Backup N”) in the <u>sent copy only</u>. Whether the unit uses that name to pick the slot is unverified, so check which slot it reports. The unit <b>overwrites the slot it imports into</b>. Your computer must be on the same network as the unit. The unit's own reply page (“…imported!”) opens in a new tab.</p>`,
+    [['Cancel'],['Send',async dd=>{
+      try{let out=st.cur;const sv=dd.querySelector('#slotn').value.trim();
+        if(sv){const m=/^(.*?)(\d+)$/.exec(curName);if(!m){toast('Backup name has no trailing number to change.','e');return;}
+          const nn=(m[1]+parseInt(sv,10)).slice(0,13);out=st.cur.slice();out.fill(0,0,14);for(let i=0;i<nn.length;i++)out[i]=nn.charCodeAt(i);}
+        const fm=document.createElement('form');fm.method='POST';fm.action='http://graviton.local/upload';fm.enctype='multipart/form-data';fm.target='_blank';fm.style.display='none';
+        const fi=document.createElement('input');fi.type='file';fi.name='data';const dt=new DataTransfer();dt.items.add(new File([out],nm,{type:'application/octet-stream'}));fi.files=dt.files;
+        const hi=document.createElement('input');hi.type='hidden';hi.name='upload';hi.value='Import';
+        fm.append(fi,hi);document.body.appendChild(fm);fm.submit();setTimeout(()=>fm.remove(),2000);
+        toast('Sent. The unit\'s reply (“imported!”) opens in a new tab. If nothing opened, allow pop-ups for this page.','w');
+      }catch(e){toast('Could not reach graviton.local: '+e.message,'e');}
+    },true]]);
+}
+function openBulkEdit(){
+  const opt=(v,t,sel)=>`<option value="${v}"${sel?' selected':''}>${t}</option>`;
+  let chOpts='';for(let n=1;n<=16;n++){const nm=chanInfo(st.cur,n).name;chOpts+=opt(n,nm==='Ch '+n?n:n+' · '+esc(nm));}
+  const d=dlg(`<h3>Bulk edit messages</h3>
+    <div class="meta" style="margin-bottom:4px"><b>1 · Find</b> messages that match all of these (blank = any)</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+      <label class="meta">Type<br><select id="ft"><option value="">Any</option><option value="CC">CC</option><option value="PC">PC</option>${MODELS[MODEL].full?'<option value="TAP">Tap Tempo</option><option value="EXP">Expression CC</option>':''}</select></label>
+      <label class="meta">MIDI channel<br><select id="fc"><option value="">Any</option>${chOpts}</select></label>
+      <label class="meta">Number<br><input id="fn" type="number" min="0" max="127" style="width:84px" placeholder="any"></label>
+      <label class="meta">Value<br><input id="fv" type="number" min="0" max="127" style="width:84px" placeholder="any"></label></div>
+    <div class="meta" style="margin:12px 0 4px"><b>2 · Then</b></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+      <label class="meta">Action<br><select id="ea"><option value="chg">Change to…</option><option value="del">Delete message</option></select></label>
+      <span id="echg" style="display:contents">
+      <label class="meta">MIDI channel<br><select id="ec"><option value="">keep</option>${chOpts}</select></label>
+      <label class="meta">Number<br><input id="en" type="number" min="0" max="127" style="width:84px" placeholder="keep"></label>
+      <label class="meta">Value<br><input id="ev" type="number" min="0" max="127" style="width:84px" placeholder="keep"></label>
+      <label class="meta"${MODELS[MODEL].full?'':' style="display:none"'}>Tap Tempo<br><select id="et"><option value="">keep</option><option value="on">Enabled</option><option value="off">Disabled</option></select></label></span></div>
+    <div class="meta" style="margin:12px 0 6px;display:flex;gap:6px;align-items:center"><b>3 · Presets</b> with matches <button data-s="all">All</button><button data-s="none">None</button><span id="bcount" style="margin-left:auto"></span></div>
+    <div id="bl" style="max-height:32vh;overflow:auto;border:1px solid var(--line);border-radius:8px"></div>
+    <p id="berr" class="meta" style="color:var(--bad);min-height:1.3em"></p>
+    <p class="meta">Changes only touch messages that match; fields left on “keep” stay as they are. Number applies to CC, PC, Expression CC and the Tap Tempo tempo; Value applies to CC and Expression CC. Presets 119 (Mute) and 120 (Tuner) are listed too if they match; uncheck them to leave them alone. One Undo reverts the whole batch.</p>`,
+    [['Cancel'],['Apply to selected',dd=>{
+      const sel=new Set([...dd.querySelectorAll('#bl input:checked')].map(x=>+x.dataset.i));
+      if(!sel.size){dd.querySelector('#berr').textContent='Nothing selected – no preset has a matching message.';return false;}
+      const f=filt(),del=dd.querySelector('#ea').value==='del',nc=ev('#ec'),nn=ev('#en'),nv=ev('#ev'),nt=dd.querySelector('#et').value;
+      if(!del&&nc===null&&nn===null&&nv===null&&!nt){dd.querySelector('#berr').textContent='Choose what to change (or switch the action to Delete).';return false;}
+      let cm=0,cp=0;
+      const ok=edit(x=>{for(const i of sel){const ms=getMsgs(x,i);let hit=0;
+        const out=[];for(const m of ms){if(!f(m)){out.push(m);continue;}hit++;
+          if(del)continue;const k=msgKind(m);
+          if(nc!==null&&hasCh(k))m[3]=nc;
+          if(nn!==null){if(k==='CC'||k==='PC'||k==='EXP')m[1]=nn;else if(k==='TAP')m[1]=(m[1]&0x80)|nn;}
+          if(nv!==null&&(k==='CC'||k==='EXP'))m[2]=nv;
+          if(nt&&k==='TAP')m[1]=nt==='off'?(m[1]|0x80):(m[1]&0x7f);
+          out.push(m);}
+        if(hit){setMsgs(x,i,out);cm+=hit;cp++;}}});
+      if(ok)toast(`${del?'Deleted':'Changed'} ${cm} message${cm===1?'':'s'} in ${cp} preset${cp===1?'':'s'}.`,'w');},true]]);
+  d.className='wide';
+  const q=id=>d.querySelector(id);
+  const iv=id=>{const v=q(id).value.trim();return v===''?null:Math.max(0,Math.min(127,parseInt(v,10)||0));};
+  function ev(id){return iv(id);}
+  function filt(){const t=q('#ft').value,c=q('#fc').value?+q('#fc').value:null,n=iv('#fn'),v=iv('#fv');
+    return m=>{const k=msgKind(m);if(t&&k!==t)return false;
+      if(c!==null&&(!hasCh(k)||m[3]!==c))return false;
+      if(n!==null){if(k==='RAW')return false;if((k==='TAP'?m[1]&0x7f:m[1])!==n)return false;}
+      if(v!==null){if(k!=='CC'&&k!=='EXP')return false;if(m[2]!==v)return false;}
+      return true;};}
+  function list(){const f=filt(),prev=new Set([...d.querySelectorAll('#bl input:checked')].map(x=>+x.dataset.i)),first=!d._init;d._init=1;let h='',tot=0;
+    for(let i=0;i<120;i++){const c=getMsgs(st.cur,i).filter(f).length;if(!c)continue;tot+=c;
+      h+=`<label class="brow"><input type="checkbox" data-i="${i}"${first||prev.has(i)||!d._seen?' checked':''}><span class="no">${i+1}</span><span style="flex:1">${esc(getName(st.cur,'presets',i))}</span><span class="meta">${c} match${c===1?'':'es'}</span></label>`;}
+    d._seen=1;q('#bl').innerHTML=h||'<p class="meta" style="padding:8px">No matching messages.</p>';
+    q('#bl').querySelectorAll('input').forEach(x=>x.onchange=cnt);cnt();q('#berr').textContent='';}
+  const cnt=()=>{const a=d.querySelectorAll('#bl input'),c=d.querySelectorAll('#bl input:checked');q('#bcount').textContent=`${c.length} of ${a.length} presets selected`;};
+  d.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{d.querySelectorAll('#bl input').forEach(x=>x.checked=b.dataset.s==='all');cnt();});
+  ['#ft','#fc','#fn','#fv'].forEach(id=>{q(id).oninput=q(id).onchange=()=>{d._seen=0;list();};});
+  q('#ea').onchange=()=>{q('#echg').style.display=q('#ea').value==='del'?'none':'contents';};
+  list();
+}
+function openBulk(){
+  const num=(v,lo,hi)=>{v=parseInt(v,10);return isNaN(v)?lo:Math.max(lo,Math.min(hi,v));};
+  let chOpts='';for(let n=1;n<=16;n++){const nm=chanInfo(st.cur,n).name;chOpts+=`<option value="${n}">${nm==='Ch '+n?n:n+' · '+esc(nm)}</option>`;}
+  let rows='';for(let i=0;i<118;i++){const n=getMsgs(st.cur,i).length,nm=getName(st.cur,'presets',i),full=n>=MSG_N;
+    rows+=`<label class="brow${full?' off':''}"><input type="checkbox" data-i="${i}" data-named="${isDefaultName('presets',nm)?0:1}" data-n="${n}"${full?' disabled':''}><span class="no">${i+1}</span><span style="flex:1">${esc(nm)}</span><span class="meta">${n} msg${full?' · full':''}</span></label>`;}
+  const d=dlg(`<h3>Bulk add a message to presets</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+      <label class="meta">Type<br><select id="bt"><option value="CC">CC</option><option value="PC">PC</option>${MODELS[MODEL].full?'<option value="TAP">Tap Tempo</option>':''}</select></label>
+      <label class="meta">MIDI channel<br><select id="bc">${chOpts}</select></label>
+      <label class="meta">Number<br><input id="bn" type="number" min="0" max="127" value="0" style="width:84px"></label>
+      <label class="meta">Value<br><input id="bv" type="number" min="0" max="127" value="0" style="width:84px"></label></div>
+    <div class="meta" style="margin:12px 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">Select presets:
+      <button data-s="all">All</button><button data-s="none">None</button><button data-s="named">Named only</button><button data-s="has">Has messages</button><span id="bcount" style="margin-left:auto"></span></div>
+    <div id="bl" style="max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:8px">${rows}</div>
+    <label class="meta" style="display:block;margin-top:8px"><input type="checkbox" id="bskip" checked> skip presets that already contain this exact message</label>
+    <p id="berr" class="meta" style="color:var(--bad);min-height:1.3em"></p>
+    <p class="meta">The message is appended after each preset’s existing messages (max 16). Mute and Tuner are never touched. One Undo reverts the whole batch.</p>`,
+    [['Cancel'],['Add to selected',dd=>{
+      const sel=[...dd.querySelectorAll('#bl input:checked')].map(x=>+x.dataset.i);
+      if(!sel.length){dd.querySelector('#berr').textContent='Select at least one preset.';return false;}
+      const t=dd.querySelector('#bt').value,ch=+dd.querySelector('#bc').value,n=num(dd.querySelector('#bn').value,0,127),v=num(dd.querySelector('#bv').value,0,127);
+      const msg=t==='CC'?[0xb0,n,v,ch]:t==='PC'?[0xc0,n,0,ch]:[8,0,0,1],skipDup=dd.querySelector('#bskip').checked;
+      let added=0,skipped=0;
+      const ok=edit(x=>{for(const i of sel){const ms=getMsgs(x,i);
+        if(ms.length>=MSG_N||(skipDup&&ms.some(m=>m.every((b,k)=>b===msg[k])))){skipped++;continue;}
+        ms.push(msg.slice());setMsgs(x,i,ms);added++;}});
+      if(ok)toast(`Added to ${added} preset${added===1?'':'s'}`+(skipped?`, skipped ${skipped}`:'')+'.','w');},true]]);
+  d.className='wide';
+  const cnt=()=>d.querySelector('#bcount').textContent=d.querySelectorAll('#bl input:checked').length+' selected';
+  const boxes=()=>[...d.querySelectorAll('#bl input:not(:disabled)')];
+  d.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const s=b.dataset.s;
+    boxes().forEach(x=>{x.checked=s==='all'?true:s==='none'?false:s==='named'?x.dataset.named==='1':+x.dataset.n>0;});cnt();});
+  d.querySelectorAll('#bl input').forEach(x=>x.onchange=cnt);cnt();
+  const upd=()=>{const t=d.querySelector('#bt').value;
+    d.querySelector('#bc').disabled=d.querySelector('#bn').disabled=t==='TAP';d.querySelector('#bv').disabled=t!=='CC';};
+  d.querySelector('#bt').onchange=upd;upd();
+}
+
+/* ---------- wiring ---------- */
+$('#bOpen').onclick=()=>$('#fOpen').click();$('#bSrc').onclick=()=>$('#fSrc').click();$('#bImp').onclick=()=>$('#fImp').click();
+$('#fOpen').onchange=e=>{if(e.target.files[0])loadMain(e.target.files[0]);e.target.value='';};
+$('#fSrc').onchange=e=>{if(e.target.files[0])loadSrc(e.target.files[0]);e.target.value='';};
+$('#fImp').onchange=e=>{if(e.target.files[0])importFile(e.target.files[0]);e.target.value='';};
+$('#bBulk').onclick=openBulk;$('#bBulkEd').onclick=openBulkEdit;
+$('#bankSel').innerHTML='<option value="">All banks</option>'+Array.from({length:12},(_,i)=>`<option value="${i+1}">Bank ${i+1}</option>`).join('');$('#bankSel').onchange=render;
+$('#bUndo').onclick=undo;$('#bRedo').onclick=redo;$('#bSave').onclick=save;
+function openAbout(){dlg(`<h3>Graviton Librarian <span class="meta" style="font-weight:400">v${APP_VERSION}</span></h3>
+  <p>A browser tool to manage backups (<code>.bak</code>) of the Luminite Graviton M2 and M1: presets and their messages, songs, setlists, SysEx slots and channel names/colours.</p>
+  <p><b>Unofficial.</b> This is an independent community tool, not made, endorsed or supported by Luminite. “Graviton”, “M1”, “M2” and “Luminite” belong to their owners. It contains no firmware, and it only reads and writes backup files you provide.</p>
+  <p><b>Privacy.</b> Everything runs in your browser. Your backups are never uploaded anywhere. The page only talks to your unit (graviton.local) when you press Get/Send to device.</p>
+  <p><b>Safety.</b> Only the slots you edit are rewritten; all other bytes are kept (the tool refuses to save otherwise). Your opened file is never overwritten. Still: keep your original backup, and test changes on a spare backup slot first.</p>
+  <p class="meta"><b>Tested on real hardware:</b> M2 (firmware ${KNOWN_VERSION}): restored backups with edited songs, messages (including Mute/Tuner), channels and the Tap Tempo flag. Setlists, imported songs and song options follow the decoded layout but have had less hardware testing on the M2. Other firmware versions may use a different layout; the tool warns when the version differs.</p>
+  <p class="meta"><b>Graviton M1:</b> supported (firmware 5.2.6) and tested on a real M1: song BPM, preset names, messages (PC, CC, Tempo, adding a message, MIDI channel), setlists, channel names/colours, startup preset, header tempo, bulk edit, swapping, copying between backups and Get/Send to device. SysEx slots are untested. Tap Tempo and Expression CC are M2-only.</p>
+  <p class="meta">Provided “as is”, without warranty, under the MIT licence. Use at your own risk.</p>`,[['Close']]);}
+$('#bAbout').onclick=openAbout;{const l=$('#aboutLink');if(l)l.onclick=e=>{e.preventDefault();openAbout();};}
+if(location.protocol==='https:'){$('#bGet').disabled=$('#bSend').disabled=true;$('#bGet').title=$('#bSend').title='Not available in the web version: browsers block https pages from reaching the unit. Download this page and open it locally.';
+  {const n=$('#httpsNote');if(n){n.style.display='';$('#selfDl').href=location.href;}}}$('#bGet').onclick=getDevice;$('#bSend').onclick=sendDevice;$('#bDiff').onclick=showChanges;$('#bExpAll').onclick=exportSection;
+$('#q').oninput=render;$('#hideBlank').onchange=render;
+document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||e.target.tagName==='INPUT')return;if(e.key==='z'){e.preventDefault();undo();}if(e.key==='y'){e.preventDefault();redo();}});
+const dz=$('#dz');
+['dragover','dragenter'].forEach(t=>document.addEventListener(t,e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();dz&&dz.classList.add('over');}}));
+document.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files.length&&!e.defaultPrevented){e.preventDefault();const f=e.dataTransfer.files[0];if(/\.bak$/i.test(f.name))(st.cur?loadSrc:loadMain)(f);}});
+</script>
+</body></html>

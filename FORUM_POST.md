@@ -1,12 +1,15 @@
-**Graviton M2 Librarian: a free browser tool for managing M2 backups**
+**Graviton Librarian: a free browser tool for managing M1 and M2 backups**
 
-I built a small tool for organising Graviton M2 backups (.bak): rename/reorder/copy presets, edit messages (CC, PC, Tap Tempo, Expression CC), bulk-edit messages across presets, edit songs and setlists (incl. song BPM and startup preset), import a song with its presets from another backup, change channel names/colours, and see where each preset is used.
+I built a small tool for organising Luminite Graviton backups (.bak), for both the M1 and the M2: rename, reorder and copy presets, edit messages (CC, PC, Tempo / Tap Tempo, Expression CC on the M2), bulk-edit messages across presets, edit songs (including BPM and startup preset) and setlists, rename channels and change their colours, and pull items from another backup of the same model.
 
-- Runs entirely in your browser, nothing is uploaded
-- Only the slots you edit are rewritten; every other byte of the file is kept
-- Never overwrites your original file
-- Optional "Get from / Send to device" over the unit's Wi-Fi mode (when the page is opened locally)
+- Runs entirely in your browser. Nothing is uploaded anywhere.
+- Auto-detects M1 or M2 (or pick the model yourself).
+- Only the slots you edit are rewritten; every other byte stays as it was, and the tool refuses to save otherwise.
+- Optional Get from device / Send to device over the unit's Wi-Fi mode (works from a downloaded copy of the page, not from the https website).
+- Free and open source (MIT). Unofficial, not affiliated with Luminite.
+
+Tested on a real M1 (firmware 5.2.6) and a real M2 (firmware 5.4.0). SysEx slots are untested. Keep your original backup and try changes on a spare slot first.
 
 Link: <URL>
 
-It's an unofficial community tool, tested on firmware 5.4.0. Please keep your original backup and try changes on a spare slot first. I'd love feedback, especially from other firmware versions.
+Feedback and bug reports welcome, especially from other firmware versions.

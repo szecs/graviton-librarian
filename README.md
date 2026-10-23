@@ -1,9 +1,9 @@
-# Graviton M2 Librarian
+# Graviton Librarian (M1 + M2)
 
-A browser tool to manage backups (`.bak`) of the **Luminite Graviton M2** MIDI controller.
+A browser tool to manage backups (`.bak`) of the **Luminite Graviton M2** and **M1** MIDI controllers. The model is detected automatically (or pick it in the *Model* menu).
+
+> **M1 support** (firmware 5.2.6) is tested on a real M1: names, messages (PC / CC / Tempo), songs with BPM, setlists, channels, startup preset, header tempo, bulk edit, swapping, copying between backups and Get/Send to device. SysEx slots are untested. Tap Tempo and Expression CC are M2-only.
 Unofficial community project, not affiliated with Luminite.
-
-![Graviton M2 Librarian](Screenshot.png)
 
 ## What it does
 - Presets: rename, reorder, copy, clear; edit messages (CC, PC, Tap Tempo incl. enable/disable, Expression CC); bulk add and bulk edit across presets
@@ -26,10 +26,10 @@ Everything runs in your browser. Backups are never uploaded anywhere.
 ## Safety and status
 - Keep your original backup and try changes on a spare backup slot first.
 - Verified on firmware 5.4.0. The tool warns about other versions.
-- Hardware-tested: restoring a backup with an edited song. Other edit types follow the decoded layout but have had less hardware testing. Please report what works or breaks.
+- Hardware-tested on the M2: restored backups with edited songs, messages (including Mute/Tuner), channels and the Tap Tempo flag. Setlists, imported songs and song options follow the decoded layout but have had less testing on the M2. Please report what works or breaks.
 
 ## Layout notes (for contributors)
 `.bak` is 59204 bytes. 120-record tables: presets at 0x6e (81 bytes), SysEx at 0x2666 (79), songs at 0x4b6e (44), setlists at 0x600e (44). Preset: name at +2 (14 bytes), 16 messages of 4 bytes at +16, message count at +80. Message `[type, d1, d2, channel]`: `b0` CC, `c0` PC, `08` Tap Tempo (d1 = tempo, bit 7 = disabled), `0d` Expression CC. See the source for songs, setlists, channel table (0x84aa), song BPM (0xd654) and startup preset (0xd834) tables.
 
 ## Licence
-MIT, see `LICENSE`. "Luminite", "Graviton" and "M2" belong to their owners.
+MIT, see `LICENSE`. "Luminite", "Graviton", "M1" and "M2" belong to their owners.
